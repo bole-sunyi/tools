@@ -238,6 +238,15 @@
       return sign + upper;
     }
 
+    function parseDigitsToBigInt(digits, base) {
+      let result = 0n;
+      const radix = BigInt(base);
+      for (const ch of digits) {
+        result = result * radix + BigInt(DIGITS.indexOf(ch));
+      }
+      return result;
+    }
+
     function parseToBigInt(raw, base) {
       const normalized = normalizeInput(raw, base);
       if (normalized === "-") {
@@ -245,7 +254,7 @@
       }
       const negative = normalized.startsWith("-");
       const digits = negative ? normalized.slice(1) : normalized;
-      const value = BigInt(digits, base);
+      const value = parseDigitsToBigInt(digits, base);
       return negative ? -value : value;
     }
 
