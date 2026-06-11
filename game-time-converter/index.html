@@ -44,15 +44,30 @@
       margin-top: 16px;
     }
 
-    .anchor {
+    .guide {
       margin: 20px 0;
-      padding: 14px 16px;
+      padding: 16px 18px;
       border-radius: 12px;
       background: #f8fafc;
       border: 1px solid #e5e7eb;
       color: #4b5563;
       font-size: 14px;
-      line-height: 1.7;
+      line-height: 1.75;
+    }
+
+    .guide h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: #1f2937;
+    }
+
+    .guide ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .guide li + li {
+      margin-top: 6px;
     }
 
     .result-card {
@@ -69,9 +84,31 @@
       color: #0369a1;
     }
 
+    .result-group {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid #e0f2fe;
+    }
+
+    .result-group:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .result-group h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #0369a1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .result-row {
       display: grid;
-      grid-template-columns: 140px 1fr;
+      grid-template-columns: 150px 1fr;
       gap: 8px 16px;
       padding: 10px 0;
       border-bottom: 1px solid #e0f2fe;
@@ -108,7 +145,6 @@
       border-radius: 999px;
       font-size: 12px;
       font-weight: 700;
-      margin-left: 8px;
       vertical-align: middle;
     }
 
@@ -151,9 +187,18 @@
     <main>
       <h1>游戏时间转换</h1>
       <p class="desc">
-        输入北京时间，自动换算 CF / MT 项目的<strong>跨天服时间</strong>与<strong>正式服时间</strong>。
-        跨天服区分夏令时早上 9 点跨天与下午 6 点跨天；正式服时间按夏令时（EDT）与冬令时（EST）自动切换。
+        以<strong>北京时间</strong>为输入基准，换算 CF / MT 项目的跨天服时间与正式服时间。
       </p>
+
+      <div class="guide">
+        <h3>换算说明</h3>
+        <ul>
+          <li><strong>跨天服</strong>：游戏内跨天重置使用的服务器时间，分夏令时与冬令时两套规则，各含早上、下午两个跨天节点。</li>
+          <li><strong>夏令时跨天服</strong>：早上 <strong>9:00</strong> 跨天、下午 <strong>18:00</strong> 跨天。</li>
+          <li><strong>冬令时跨天服</strong>：早上 <strong>10:00</strong> 跨天、下午 <strong>19:00</strong> 跨天。</li>
+          <li><strong>正式服时间</strong>：线上正式服使用的时间，按美国东部夏令时（EDT）/ 冬令时（EST）自动切换偏移。</li>
+        </ul>
+      </div>
 
       <div class="project-tabs" role="tablist" aria-label="项目选择">
         <button type="button" class="active" data-project="cf" role="tab" aria-selected="true">CF 项目</button>
@@ -173,15 +218,6 @@
 
       <div class="actions">
         <button class="primary" type="button" id="useNow">使用当前北京时间</button>
-        <button class="secondary" type="button" id="useWinterExample">冬令时示例</button>
-        <button class="secondary" type="button" id="useSummerExample">夏令时示例</button>
-      </div>
-
-      <div class="anchor">
-        <strong>9 点跨天（夏令时 · 早上 9:00）：</strong>北京时间 24 日 12:00 → 跨天服 24 日 09:00<br>
-        <strong>6 点跨天（下午 18:00）：</strong>北京时间 24 日 12:00 → 跨天服 24 日 18:00<br>
-        <strong>正式服（冬令时 EST）：</strong>北京时间 24 日 12:00 → 23 日 23:00<br>
-        <strong>正式服（夏令时 EDT）：</strong>北京时间 24 日 12:00 → 24 日 00:00
       </div>
 
       <div id="errorBox" class="error hidden" role="alert"></div>
@@ -192,20 +228,42 @@
           <span class="result-label">北京时间</span>
           <span class="result-value" id="cfBeijing">—</span>
         </div>
-        <div class="result-row">
-          <span class="result-label">9 点跨天</span>
-          <span class="result-value" id="cfServer9">—</span>
-          <span class="result-sub" id="cfServer9Note">夏令时 · 跨天服早上 9:00 跨天 · 比北京时间慢 3 小时</span>
+
+        <div class="result-group">
+          <h3>跨天服 · 夏令时 <span class="badge badge-summer">EDT</span></h3>
+          <div class="result-row">
+            <span class="result-label">早上 9:00 跨天</span>
+            <span class="result-value" id="cfSummerAm">—</span>
+            <span class="result-sub">比北京时间慢 3 小时</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">下午 18:00 跨天</span>
+            <span class="result-value" id="cfSummerPm">—</span>
+            <span class="result-sub">比北京时间快 6 小时</span>
+          </div>
         </div>
-        <div class="result-row">
-          <span class="result-label">6 点跨天</span>
-          <span class="result-value" id="cfServer6">—</span>
-          <span class="result-sub" id="cfServer6Note">跨天服下午 18:00 跨天 · 比北京时间快 6 小时</span>
+
+        <div class="result-group">
+          <h3>跨天服 · 冬令时 <span class="badge badge-winter">EST</span></h3>
+          <div class="result-row">
+            <span class="result-label">早上 10:00 跨天</span>
+            <span class="result-value" id="cfWinterAm">—</span>
+            <span class="result-sub">比北京时间慢 2 小时</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">下午 19:00 跨天</span>
+            <span class="result-value" id="cfWinterPm">—</span>
+            <span class="result-sub">比北京时间快 7 小时</span>
+          </div>
         </div>
-        <div class="result-row">
-          <span class="result-label">正式服时间</span>
-          <span class="result-value" id="cfFormal">—</span>
-          <span class="result-sub" id="cfFormalNote">—</span>
+
+        <div class="result-group">
+          <h3>正式服时间</h3>
+          <div class="result-row">
+            <span class="result-label">当前正式服</span>
+            <span class="result-value" id="cfFormal">—</span>
+            <span class="result-sub" id="cfFormalNote">—</span>
+          </div>
         </div>
       </div>
 
@@ -215,20 +273,42 @@
           <span class="result-label">北京时间</span>
           <span class="result-value" id="mtBeijing">—</span>
         </div>
-        <div class="result-row">
-          <span class="result-label">9 点跨天</span>
-          <span class="result-value" id="mtServer9">—</span>
-          <span class="result-sub" id="mtServer9Note">夏令时 · 跨天服早上 9:00 跨天 · 比北京时间慢 3 小时</span>
+
+        <div class="result-group">
+          <h3>跨天服 · 夏令时 <span class="badge badge-summer">EDT</span></h3>
+          <div class="result-row">
+            <span class="result-label">早上 9:00 跨天</span>
+            <span class="result-value" id="mtSummerAm">—</span>
+            <span class="result-sub">比北京时间慢 3 小时</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">下午 18:00 跨天</span>
+            <span class="result-value" id="mtSummerPm">—</span>
+            <span class="result-sub">比北京时间快 6 小时</span>
+          </div>
         </div>
-        <div class="result-row">
-          <span class="result-label">6 点跨天</span>
-          <span class="result-value" id="mtServer6">—</span>
-          <span class="result-sub" id="mtServer6Note">跨天服下午 18:00 跨天 · 比北京时间快 6 小时</span>
+
+        <div class="result-group">
+          <h3>跨天服 · 冬令时 <span class="badge badge-winter">EST</span></h3>
+          <div class="result-row">
+            <span class="result-label">早上 10:00 跨天</span>
+            <span class="result-value" id="mtWinterAm">—</span>
+            <span class="result-sub">比北京时间慢 2 小时</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">下午 19:00 跨天</span>
+            <span class="result-value" id="mtWinterPm">—</span>
+            <span class="result-sub">比北京时间快 7 小时</span>
+          </div>
         </div>
-        <div class="result-row">
-          <span class="result-label">正式服时间</span>
-          <span class="result-value" id="mtFormal">—</span>
-          <span class="result-sub" id="mtFormalNote">—</span>
+
+        <div class="result-group">
+          <h3>正式服时间</h3>
+          <div class="result-row">
+            <span class="result-label">当前正式服</span>
+            <span class="result-value" id="mtFormal">—</span>
+            <span class="result-sub" id="mtFormalNote">—</span>
+          </div>
         </div>
       </div>
     </main>
@@ -237,8 +317,13 @@
   <script>
     const BEIJING_TZ = "Asia/Shanghai";
     const EASTERN_TZ = "America/New_York";
-    const SERVER_9_OFFSET_HOURS = -3;
-    const SERVER_6_OFFSET_HOURS = 6;
+
+    const CROSSOVER_OFFSETS = {
+      summerAm: -3,
+      summerPm: 6,
+      winterAm: -2,
+      winterPm: 7,
+    };
 
     const inputDate = document.getElementById("inputDate");
     const inputTime = document.getElementById("inputTime");
@@ -246,12 +331,6 @@
     const cfResult = document.getElementById("cfResult");
     const mtResult = document.getElementById("mtResult");
     const projectTabs = document.querySelectorAll(".project-tabs button");
-
-    let activeProject = "cf";
-
-    function pad2(value) {
-      return String(value).padStart(2, "0");
-    }
 
     function formatParts(date, timeZone) {
       const parts = new Intl.DateTimeFormat("zh-CN", {
@@ -339,20 +418,24 @@
     }
 
     function renderProject(prefix, beijingDate) {
-      const server9Date = addHours(beijingDate, SERVER_9_OFFSET_HOURS);
-      const server6Date = addHours(beijingDate, SERVER_6_OFFSET_HOURS);
       const formalOffset = getFormalOffsetHours(beijingDate);
       const formalDate = addHours(beijingDate, -formalOffset);
       const season = getFormalSeasonLabel(beijingDate);
 
       document.getElementById(`${prefix}Beijing`).textContent = formatDateTime(beijingDate, BEIJING_TZ);
-      document.getElementById(`${prefix}Server9`).textContent = formatDateTime(server9Date, BEIJING_TZ);
-      document.getElementById(`${prefix}Server6`).textContent = formatDateTime(server6Date, BEIJING_TZ);
+      document.getElementById(`${prefix}SummerAm`).textContent =
+        formatDateTime(addHours(beijingDate, CROSSOVER_OFFSETS.summerAm), BEIJING_TZ);
+      document.getElementById(`${prefix}SummerPm`).textContent =
+        formatDateTime(addHours(beijingDate, CROSSOVER_OFFSETS.summerPm), BEIJING_TZ);
+      document.getElementById(`${prefix}WinterAm`).textContent =
+        formatDateTime(addHours(beijingDate, CROSSOVER_OFFSETS.winterAm), BEIJING_TZ);
+      document.getElementById(`${prefix}WinterPm`).textContent =
+        formatDateTime(addHours(beijingDate, CROSSOVER_OFFSETS.winterPm), BEIJING_TZ);
       document.getElementById(`${prefix}Formal`).innerHTML =
         `${formatDateTime(formalDate, BEIJING_TZ)}` +
         `<span class="badge ${season.className}">${season.label}</span>`;
       document.getElementById(`${prefix}FormalNote`).textContent =
-        `比北京时间慢 ${formalOffset} 小时（${season.label}）`;
+        `按输入日期自动匹配：比北京时间慢 ${formalOffset} 小时（${season.label}）`;
     }
 
     function showError(message) {
@@ -384,16 +467,7 @@
       calculate();
     }
 
-    function setWinterExample() {
-      setBeijingNow();
-    }
-
-    function setSummerExample() {
-      setBeijingNow();
-    }
-
     function switchProject(project) {
-      activeProject = project;
       projectTabs.forEach((tab) => {
         const selected = tab.dataset.project === project;
         tab.classList.toggle("active", selected);
@@ -408,8 +482,6 @@
     });
 
     document.getElementById("useNow").addEventListener("click", setBeijingNow);
-    document.getElementById("useWinterExample").addEventListener("click", setWinterExample);
-    document.getElementById("useSummerExample").addEventListener("click", setSummerExample);
     inputDate.addEventListener("change", calculate);
     inputTime.addEventListener("input", calculate);
 
