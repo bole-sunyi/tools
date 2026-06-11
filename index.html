@@ -3,281 +3,69 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mod 取模计算器</title>
+  <title>Tools</title>
+  <link rel="stylesheet" href="assets/common.css">
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
+    .tool-list {
       display: grid;
-      place-items: center;
-      padding: 24px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f6f8fb;
-      color: #1f2937;
+      gap: 16px;
+      margin-top: 8px;
     }
 
-    main {
-      width: min(720px, 100%);
-      padding: 32px;
-      border-radius: 18px;
-      background: #fff;
-      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+    .tool-card {
+      display: block;
+      padding: 20px 22px;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
     }
 
-    h1 {
+    .tool-card:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .tool-card h2 {
       margin: 0 0 8px;
-      font-size: 30px;
+      font-size: 20px;
+      color: #1d4ed8;
     }
 
-    .desc {
-      margin: 0 0 24px;
+    .tool-card p {
+      margin: 0;
       color: #6b7280;
       line-height: 1.6;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-
-    input {
-      width: 100%;
-      padding: 14px 16px;
-      border: 1px solid #d1d5db;
-      border-radius: 12px;
-      font-size: 18px;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-    }
-
-    .inputs {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .formula {
-      margin: 18px 0 0;
-      padding: 14px 16px;
-      border-radius: 12px;
-      background: #f3f4f6;
-      color: #374151;
-      font-size: 18px;
-      font-weight: 700;
-      word-break: break-all;
-    }
-
-    @media (max-width: 640px) {
-      .inputs {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 16px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 12px;
-      padding: 12px 18px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .primary {
-      color: #fff;
-      background: #2563eb;
-    }
-
-    .primary:hover {
-      background: #1d4ed8;
-    }
-
-    .secondary {
-      color: #1f2937;
-      background: transparent;
-      border: 1px solid #d1d5db;
-    }
-
-    .result {
-      margin-top: 24px;
-      padding: 18px;
-      border-radius: 14px;
-      background: #ecfdf5;
-      color: #047857;
-      font-size: 20px;
-      font-weight: 800;
-      word-break: break-all;
-    }
-
-    .error {
-      color: #dc2626;
-      background: #fef2f2;
-    }
-
-    .steps {
-      margin-top: 16px;
-      padding-left: 20px;
-      color: #6b7280;
-      line-height: 1.7;
-    }
-
-    .examples {
-      margin-top: 24px;
-      color: #6b7280;
-      font-size: 14px;
-    }
-
-    code {
-      padding: 2px 6px;
-      border-radius: 6px;
-      background: rgba(107, 114, 128, 0.14);
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Mod 取模计算器</h1>
-    <p class="desc">
-      输入三个数字后，页面会自动计算 <code>(第一个数 % 第二个数) % 第三个数</code>。
-    </p>
-
-    <div class="inputs">
-      <div>
-        <label for="numberA">id</label>
-        <input id="numberA" value="11589" inputmode="numeric" autocomplete="off" spellcheck="false">
-      </div>
-      <div>
-        <label for="numberB">第二个数（第一次取模）</label>
-        <input id="numberB" value="31" inputmode="numeric" autocomplete="off" spellcheck="false">
-      </div>
-      <div>
-        <label for="numberC">第三个数（第二次取模）</label>
-        <input id="numberC" value="2" inputmode="numeric" autocomplete="off" spellcheck="false">
-      </div>
+  <nav class="site-nav">
+    <div class="site-nav-inner">
+      <a class="site-brand" href="./">Tools</a>
+      <a href="./mod-calculator/">Mod 取模计算器</a>
+      <a href="./game-time-converter/">游戏时间转换</a>
     </div>
+  </nav>
 
-    <div id="formula" class="formula"></div>
+  <div class="page-wrap">
+    <main>
+      <h1>工具集</h1>
+      <p class="desc">常用小工具集合，点击卡片进入对应工具页面。</p>
 
-    <div class="actions">
-      <button class="primary" type="button" id="calculate">计算</button>
-      <button class="secondary" type="button" id="clear">清空</button>
-      <button class="secondary" type="button" id="example">填入示例</button>
-    </div>
-
-    <div id="result" class="result" aria-live="polite"></div>
-    <ol id="steps" class="steps"></ol>
-
-    <p class="examples">
-      示例：id 填 <code>11589</code>，第二个数填 <code>31</code>，第三个数填 <code>2</code>。
-      只支持整数，第二个数和第三个数不能为 0。
-    </p>
-
-  </main>
-
-  <script>
-    const numberAInput = document.getElementById("numberA");
-    const numberBInput = document.getElementById("numberB");
-    const numberCInput = document.getElementById("numberC");
-    const formulaBox = document.getElementById("formula");
-    const resultBox = document.getElementById("result");
-    const stepsBox = document.getElementById("steps");
-
-    function parseInteger(input, label) {
-      const value = input.value.trim();
-      if (!value) {
-        throw new Error(`请输入${label}`);
-      }
-      if (!/^\d+$/.test(value)) {
-        throw new Error(`${label}只能填写整数`);
-      }
-      return BigInt(value);
-    }
-
-    function readValues() {
-      const numberA = parseInteger(numberAInput, "id");
-      const numberB = parseInteger(numberBInput, "第二个数");
-      const numberC = parseInteger(numberCInput, "第三个数");
-      if (numberB === 0n || numberC === 0n) {
-        throw new Error("第二个数和第三个数不能为 0");
-      }
-      return { numberA, numberB, numberC };
-    }
-
-    function renderSuccess(result, steps) {
-      resultBox.className = "result";
-      resultBox.textContent = `结果：${result}`;
-      stepsBox.innerHTML = steps.map((step) => `<li>${step}</li>`).join("");
-    }
-
-    function renderError(message) {
-      resultBox.className = "result error";
-      resultBox.textContent = message;
-      stepsBox.innerHTML = "";
-    }
-
-    function renderFormula() {
-      const a = numberAInput.value.trim() || "?";
-      const b = numberBInput.value.trim() || "?";
-      const c = numberCInput.value.trim() || "?";
-      formulaBox.textContent = `当前公式：(${a} % ${b}) % ${c}`;
-    }
-
-    function calculate() {
-      renderFormula();
-      try {
-        const { numberA, numberB, numberC } = readValues();
-        const firstResult = numberA % numberB;
-        const finalResult = firstResult % numberC;
-        renderSuccess(finalResult, [
-          `${numberA} % ${numberB} = ${firstResult}`,
-          `${firstResult} % ${numberC} = ${finalResult}`,
-        ]);
-      } catch (error) {
-        renderError(error.message || String(error));
-      }
-    }
-
-    document.getElementById("calculate").addEventListener("click", calculate);
-    document.getElementById("clear").addEventListener("click", () => {
-      numberAInput.value = "";
-      numberBInput.value = "";
-      numberCInput.value = "";
-      numberAInput.focus();
-      calculate();
-    });
-    document.getElementById("example").addEventListener("click", () => {
-      numberAInput.value = "11589";
-      numberBInput.value = "31";
-      numberCInput.value = "2";
-      calculate();
-      numberAInput.focus();
-    });
-
-    [numberAInput, numberBInput, numberCInput].forEach((input) => {
-      input.addEventListener("input", calculate);
-      input.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          calculate();
-        }
-      });
-    });
-
-    calculate();
-  </script>
+      <div class="tool-list">
+        <a class="tool-card" href="./mod-calculator/">
+          <h2>Mod 取模计算器</h2>
+          <p>计算 <code>(第一个数 % 第二个数) % 第三个数</code>，支持大整数。</p>
+        </a>
+        <a class="tool-card" href="./game-time-converter/">
+          <h2>游戏时间转换</h2>
+          <p>输入北京时间，换算 CF / MT 的跨天服时间与玩家美东时间（自动区分夏令时 / 冬令时）。</p>
+        </a>
+      </div>
+    </main>
+  </div>
 </body>
 </html>

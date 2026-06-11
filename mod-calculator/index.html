@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mod 取模计算器</title>
+  <link rel="stylesheet" href="../assets/common.css">
+  <style>
+    .inputs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .formula {
+      margin: 18px 0 0;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 18px;
+      font-weight: 700;
+      word-break: break-all;
+    }
+
+    @media (max-width: 640px) {
+      .inputs {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .result {
+      margin-top: 24px;
+      padding: 18px;
+      border-radius: 14px;
+      background: #ecfdf5;
+      color: #047857;
+      font-size: 20px;
+      font-weight: 800;
+      word-break: break-all;
+    }
+
+    .error {
+      color: #dc2626;
+      background: #fef2f2;
+    }
+
+    .steps {
+      margin-top: 16px;
+      padding-left: 20px;
+      color: #6b7280;
+      line-height: 1.7;
+    }
+
+    .examples {
+      margin-top: 24px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <div class="site-nav-inner">
+      <a class="site-brand" href="../">Tools</a>
+      <a href="../mod-calculator/" class="active">Mod 取模计算器</a>
+      <a href="../game-time-converter/">游戏时间转换</a>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+    <main>
+      <h1>Mod 取模计算器</h1>
+      <p class="desc">
+        输入三个数字后，页面会自动计算 <code>(第一个数 % 第二个数) % 第三个数</code>。
+      </p>
+
+      <div class="inputs">
+        <div>
+          <label for="numberA">id</label>
+          <input id="numberA" value="11589" inputmode="numeric" autocomplete="off" spellcheck="false">
+        </div>
+        <div>
+          <label for="numberB">第二个数（第一次取模）</label>
+          <input id="numberB" value="31" inputmode="numeric" autocomplete="off" spellcheck="false">
+        </div>
+        <div>
+          <label for="numberC">第三个数（第二次取模）</label>
+          <input id="numberC" value="2" inputmode="numeric" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+
+      <div id="formula" class="formula"></div>
+
+      <div class="actions">
+        <button class="primary" type="button" id="calculate">计算</button>
+        <button class="secondary" type="button" id="clear">清空</button>
+        <button class="secondary" type="button" id="example">填入示例</button>
+      </div>
+
+      <div id="result" class="result" aria-live="polite"></div>
+      <ol id="steps" class="steps"></ol>
+
+      <p class="examples">
+        示例：id 填 <code>11589</code>，第二个数填 <code>31</code>，第三个数填 <code>2</code>。
+        只支持整数，第二个数和第三个数不能为 0。
+      </p>
+    </main>
+  </div>
+
+  <script>
+    const numberAInput = document.getElementById("numberA");
+    const numberBInput = document.getElementById("numberB");
+    const numberCInput = document.getElementById("numberC");
+    const formulaBox = document.getElementById("formula");
+    const resultBox = document.getElementById("result");
+    const stepsBox = document.getElementById("steps");
+
+    function parseInteger(input, label) {
+      const value = input.value.trim();
+      if (!value) {
+        throw new Error(`请输入${label}`);
+      }
+      if (!/^\d+$/.test(value)) {
+        throw new Error(`${label}只能填写整数`);
+      }
+      return BigInt(value);
+    }
+
+    function readValues() {
+      const numberA = parseInteger(numberAInput, "id");
+      const numberB = parseInteger(numberBInput, "第二个数");
+      const numberC = parseInteger(numberCInput, "第三个数");
+      if (numberB === 0n || numberC === 0n) {
+        throw new Error("第二个数和第三个数不能为 0");
+      }
+      return { numberA, numberB, numberC };
+    }
+
+    function renderSuccess(result, steps) {
+      resultBox.className = "result";
+      resultBox.textContent = `结果：${result}`;
+      stepsBox.innerHTML = steps.map((step) => `<li>${step}</li>`).join("");
+    }
+
+    function renderError(message) {
+      resultBox.className = "result error";
+      resultBox.textContent = message;
+      stepsBox.innerHTML = "";
+    }
+
+    function renderFormula() {
+      const a = numberAInput.value.trim() || "?";
+      const b = numberBInput.value.trim() || "?";
+      const c = numberCInput.value.trim() || "?";
+      formulaBox.textContent = `当前公式：(${a} % ${b}) % ${c}`;
+    }
+
+    function calculate() {
+      renderFormula();
+      try {
+        const { numberA, numberB, numberC } = readValues();
+        const firstResult = numberA % numberB;
+        const finalResult = firstResult % numberC;
+        renderSuccess(finalResult, [
+          `${numberA} % ${numberB} = ${firstResult}`,
+          `${firstResult} % ${numberC} = ${finalResult}`,
+        ]);
+      } catch (error) {
+        renderError(error.message || String(error));
+      }
+    }
+
+    document.getElementById("calculate").addEventListener("click", calculate);
+    document.getElementById("clear").addEventListener("click", () => {
+      numberAInput.value = "";
+      numberBInput.value = "";
+      numberCInput.value = "";
+      numberAInput.focus();
+      calculate();
+    });
+    document.getElementById("example").addEventListener("click", () => {
+      numberAInput.value = "11589";
+      numberBInput.value = "31";
+      numberCInput.value = "2";
+      calculate();
+      numberAInput.focus();
+    });
+
+    [numberAInput, numberBInput, numberCInput].forEach((input) => {
+      input.addEventListener("input", calculate);
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          calculate();
+        }
+      });
+    });
+
+    calculate();
+  </script>
+</body>
+</html>

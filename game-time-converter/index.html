@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>游戏时间转换</title>
+  <link rel="stylesheet" href="../assets/common.css">
+  <style>
+    .project-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .project-tabs button {
+      flex: 1;
+      background: #f3f4f6;
+      color: #4b5563;
+      border: 2px solid transparent;
+    }
+
+    .project-tabs button.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #2563eb;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 640px) {
+      .input-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .anchor {
+      margin: 20px 0;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .result-card {
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 14px;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+    }
+
+    .result-card h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: #0369a1;
+    }
+
+    .result-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px 16px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e0f2fe;
+      align-items: baseline;
+    }
+
+    .result-row:last-child {
+      border-bottom: 0;
+    }
+
+    .result-label {
+      color: #64748b;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .result-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      word-break: break-all;
+    }
+
+    .result-sub {
+      grid-column: 2;
+      font-size: 13px;
+      color: #64748b;
+      margin-top: -4px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .badge-summer {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .badge-winter {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .error {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #fef2f2;
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <div class="site-nav-inner">
+      <a class="site-brand" href="../">Tools</a>
+      <a href="../mod-calculator/">Mod 取模计算器</a>
+      <a href="../game-time-converter/" class="active">游戏时间转换</a>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+    <main>
+      <h1>游戏时间转换</h1>
+      <p class="desc">
+        输入北京时间，自动换算 CF / MT 项目的<strong>跨天服时间</strong>与<strong>玩家美东时间</strong>。
+        美东时间按美国夏令时（EDT）与冬令时（EST）自动切换。
+      </p>
+
+      <div class="project-tabs" role="tablist" aria-label="项目选择">
+        <button type="button" class="active" data-project="cf" role="tab" aria-selected="true">CF 项目</button>
+        <button type="button" data-project="mt" role="tab" aria-selected="false">MT 项目</button>
+      </div>
+
+      <div class="input-grid">
+        <div>
+          <label for="inputDate">日期</label>
+          <input id="inputDate" type="date">
+        </div>
+        <div>
+          <label for="inputTime">时间</label>
+          <input id="inputTime" type="time" step="1">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="button" id="useNow">使用当前北京时间</button>
+        <button class="secondary" type="button" id="useWinterExample">冬令时示例</button>
+        <button class="secondary" type="button" id="useSummerExample">夏令时示例</button>
+      </div>
+
+      <div class="anchor">
+        <strong>校验基准（冬令时 EST）：</strong>北京时间 24 日 12:00 → 跨天服 24 日 09:00 → 美东 23 日 23:00<br>
+        <strong>夏令时 EDT 示例：</strong>北京时间 24 日 12:00 → 跨天服 24 日 09:00 → 美东 24 日 00:00
+      </div>
+
+      <div id="errorBox" class="error hidden" role="alert"></div>
+
+      <div id="cfResult" class="result-card">
+        <h2>CF 项目换算结果</h2>
+        <div class="result-row">
+          <span class="result-label">北京时间</span>
+          <span class="result-value" id="cfBeijing">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">跨天服时间</span>
+          <span class="result-value" id="cfServer">—</span>
+          <span class="result-sub">比北京时间慢 3 小时</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">玩家美东时间</span>
+          <span class="result-value" id="cfEastern">—</span>
+          <span class="result-sub" id="cfEasternNote">—</span>
+        </div>
+      </div>
+
+      <div id="mtResult" class="result-card hidden">
+        <h2>MT 项目换算结果</h2>
+        <div class="result-row">
+          <span class="result-label">北京时间</span>
+          <span class="result-value" id="mtBeijing">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">跨天服时间</span>
+          <span class="result-value" id="mtServer">—</span>
+          <span class="result-sub">比北京时间慢 3 小时</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">玩家美东时间</span>
+          <span class="result-value" id="mtEastern">—</span>
+          <span class="result-sub" id="mtEasternNote">—</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const BEIJING_TZ = "Asia/Shanghai";
+    const EASTERN_TZ = "America/New_York";
+    const SERVER_OFFSET_HOURS = 3;
+
+    const inputDate = document.getElementById("inputDate");
+    const inputTime = document.getElementById("inputTime");
+    const errorBox = document.getElementById("errorBox");
+    const cfResult = document.getElementById("cfResult");
+    const mtResult = document.getElementById("mtResult");
+    const projectTabs = document.querySelectorAll(".project-tabs button");
+
+    let activeProject = "cf";
+
+    function pad2(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function formatParts(date, timeZone) {
+      const parts = new Intl.DateTimeFormat("zh-CN", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      }).formatToParts(date);
+
+      const map = {};
+      for (const part of parts) {
+        if (part.type !== "literal") {
+          map[part.type] = part.value;
+        }
+      }
+      return map;
+    }
+
+    function formatDateTime(date, timeZone) {
+      const p = formatParts(date, timeZone);
+      return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}`;
+    }
+
+    function getTimeZoneOffsetMinutes(date, timeZone) {
+      const parts = formatParts(date, timeZone);
+      const asUtc = Date.UTC(
+        Number(parts.year),
+        Number(parts.month) - 1,
+        Number(parts.day),
+        Number(parts.hour),
+        Number(parts.minute),
+        Number(parts.second)
+      );
+      return (asUtc - date.getTime()) / 60000;
+    }
+
+    function zonedTimeToUtc(year, month, day, hour, minute, second, timeZone) {
+      const utcGuess = Date.UTC(year, month - 1, day, hour, minute, second);
+      const offsetMinutes = getTimeZoneOffsetMinutes(new Date(utcGuess), timeZone);
+      return new Date(utcGuess - offsetMinutes * 60000);
+    }
+
+    function isEasternDaylightSaving(date) {
+      const year = date.getUTCFullYear();
+      const jan = new Date(Date.UTC(year, 0, 1));
+      const jul = new Date(Date.UTC(year, 6, 1));
+      const janOffset = getTimeZoneOffsetMinutes(jan, EASTERN_TZ);
+      const julOffset = getTimeZoneOffsetMinutes(jul, EASTERN_TZ);
+      const currentOffset = getTimeZoneOffsetMinutes(date, EASTERN_TZ);
+      return currentOffset === Math.max(janOffset, julOffset);
+    }
+
+    function getEasternOffsetHours(date) {
+      return isEasternDaylightSaving(date) ? 12 : 13;
+    }
+
+    function getEasternSeasonLabel(date) {
+      return isEasternDaylightSaving(date)
+        ? { label: "夏令时 EDT", className: "badge-summer" }
+        : { label: "冬令时 EST", className: "badge-winter" };
+    }
+
+    function parseBeijingInput() {
+      const dateValue = inputDate.value;
+      const timeValue = inputTime.value;
+      if (!dateValue || !timeValue) {
+        throw new Error("请填写完整的日期和时间");
+      }
+
+      const [year, month, day] = dateValue.split("-").map(Number);
+      const timeParts = timeValue.split(":");
+      const hour = Number(timeParts[0]);
+      const minute = Number(timeParts[1]);
+      const second = Number(timeParts[2] || 0);
+
+      return zonedTimeToUtc(year, month, day, hour, minute, second, BEIJING_TZ);
+    }
+
+    function addHours(date, hours) {
+      return new Date(date.getTime() + hours * 3600000);
+    }
+
+    function renderProject(prefix, beijingDate) {
+      const serverDate = addHours(beijingDate, -SERVER_OFFSET_HOURS);
+      const easternOffset = getEasternOffsetHours(beijingDate);
+      const easternDate = addHours(beijingDate, -easternOffset);
+      const season = getEasternSeasonLabel(beijingDate);
+
+      document.getElementById(`${prefix}Beijing`).textContent = formatDateTime(beijingDate, BEIJING_TZ);
+      document.getElementById(`${prefix}Server`).textContent = formatDateTime(serverDate, BEIJING_TZ);
+      document.getElementById(`${prefix}Eastern`).innerHTML =
+        `${formatDateTime(easternDate, BEIJING_TZ)}` +
+        `<span class="badge ${season.className}">${season.label}</span>`;
+      document.getElementById(`${prefix}EasternNote`).textContent =
+        `比北京时间慢 ${easternOffset} 小时（${season.label}）`;
+    }
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.classList.remove("hidden");
+    }
+
+    function hideError() {
+      errorBox.classList.add("hidden");
+      errorBox.textContent = "";
+    }
+
+    function calculate() {
+      try {
+        const beijingDate = parseBeijingInput();
+        hideError();
+        renderProject("cf", beijingDate);
+        renderProject("mt", beijingDate);
+      } catch (error) {
+        showError(error.message || String(error));
+      }
+    }
+
+    function setBeijingNow() {
+      const now = new Date();
+      const parts = formatParts(now, BEIJING_TZ);
+      inputDate.value = `${parts.year}-${parts.month}-${parts.day}`;
+      inputTime.value = `${parts.hour}:${parts.minute}:${parts.second}`;
+      calculate();
+    }
+
+    function setWinterExample() {
+      inputDate.value = "2024-12-24";
+      inputTime.value = "12:00:00";
+      calculate();
+    }
+
+    function setSummerExample() {
+      inputDate.value = "2024-06-24";
+      inputTime.value = "12:00:00";
+      calculate();
+    }
+
+    function switchProject(project) {
+      activeProject = project;
+      projectTabs.forEach((tab) => {
+        const selected = tab.dataset.project === project;
+        tab.classList.toggle("active", selected);
+        tab.setAttribute("aria-selected", String(selected));
+      });
+      cfResult.classList.toggle("hidden", project !== "cf");
+      mtResult.classList.toggle("hidden", project !== "mt");
+    }
+
+    projectTabs.forEach((tab) => {
+      tab.addEventListener("click", () => switchProject(tab.dataset.project));
+    });
+
+    document.getElementById("useNow").addEventListener("click", setBeijingNow);
+    document.getElementById("useWinterExample").addEventListener("click", setWinterExample);
+    document.getElementById("useSummerExample").addEventListener("click", setSummerExample);
+    inputDate.addEventListener("change", calculate);
+    inputTime.addEventListener("input", calculate);
+
+    setBeijingNow();
+  </script>
+</body>
+</html>
