@@ -6,17 +6,85 @@
   <title>游戏时间转换</title>
   <link rel="stylesheet" href="../assets/common.css">
   <style>
-    .project-tabs {
-      display: flex;
-      gap: 8px;
+    main {
+      width: min(1100px, 100%);
+    }
+
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
       margin-bottom: 20px;
     }
 
+    @media (max-width: 900px) {
+      .guide-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .guide-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .guide-item {
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #4b5563;
+    }
+
+    .guide-item strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #1f2937;
+    }
+
+    .control-bar {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .control-bar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .control-bar .project-tabs {
+        grid-column: 1 / -1;
+      }
+
+      .control-bar .actions {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .control-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .project-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
     .project-tabs button {
-      flex: 1;
+      padding: 12px 18px;
       background: #f3f4f6;
       color: #4b5563;
       border: 2px solid transparent;
+      white-space: nowrap;
     }
 
     .project-tabs button.active {
@@ -25,53 +93,13 @@
       border-color: #2563eb;
     }
 
-    .input-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    @media (max-width: 640px) {
-      .input-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
     .actions {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
-      margin-top: 16px;
-    }
-
-    .guide {
-      margin: 20px 0;
-      padding: 16px 18px;
-      border-radius: 12px;
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-      color: #4b5563;
-      font-size: 14px;
-      line-height: 1.75;
-    }
-
-    .guide h3 {
-      margin: 0 0 10px;
-      font-size: 15px;
-      color: #1f2937;
-    }
-
-    .guide ul {
-      margin: 0;
-      padding-left: 20px;
-    }
-
-    .guide li + li {
-      margin-top: 6px;
     }
 
     .result-card {
-      margin-top: 20px;
       padding: 18px;
       border-radius: 14px;
       background: #f0f9ff;
@@ -79,25 +107,60 @@
     }
 
     .result-card h2 {
-      margin: 0 0 12px;
+      margin: 0 0 14px;
       font-size: 18px;
       color: #0369a1;
     }
 
-    .result-group {
-      margin-top: 16px;
-      padding-top: 14px;
-      border-top: 1px solid #e0f2fe;
+    .beijing-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #bae6fd;
     }
 
-    .result-group:first-of-type {
-      margin-top: 0;
-      padding-top: 0;
-      border-top: 0;
+    .beijing-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0369a1;
     }
 
-    .result-group h3 {
-      margin: 0 0 10px;
+    .beijing-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+      word-break: break-all;
+    }
+
+    .crossover-panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .crossover-panels {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      padding: 16px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #e0f2fe;
+      min-width: 0;
+    }
+
+    .panel h3 {
+      margin: 0 0 12px;
       font-size: 14px;
       font-weight: 700;
       color: #0369a1;
@@ -106,37 +169,77 @@
       gap: 8px;
     }
 
-    .result-row {
+    .time-grid {
       display: grid;
-      grid-template-columns: 150px 1fr;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .time-cell {
+      padding: 12px;
+      border-radius: 10px;
+      background: #f8fafc;
+      min-width: 0;
+    }
+
+    .time-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .time-value {
+      font-size: 17px;
+      font-weight: 800;
+      color: #0f172a;
+      word-break: break-all;
+    }
+
+    .time-note {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .formal-panel {
+      padding: 16px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #e0f2fe;
+    }
+
+    .formal-panel h3 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #0369a1;
+    }
+
+    .formal-content {
+      display: grid;
+      grid-template-columns: 1fr auto;
       gap: 8px 16px;
-      padding: 10px 0;
-      border-bottom: 1px solid #e0f2fe;
       align-items: baseline;
     }
 
-    .result-row:last-child {
-      border-bottom: 0;
+    @media (max-width: 640px) {
+      .formal-content {
+        grid-template-columns: 1fr;
+      }
     }
 
-    .result-label {
-      color: #64748b;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .result-value {
+    .formal-value {
       font-size: 20px;
       font-weight: 800;
       color: #0f172a;
       word-break: break-all;
     }
 
-    .result-sub {
-      grid-column: 2;
+    .formal-note {
+      grid-column: 1 / -1;
       font-size: 13px;
       color: #64748b;
-      margin-top: -4px;
     }
 
     .badge {
@@ -159,7 +262,7 @@
     }
 
     .error {
-      margin-top: 16px;
+      margin-bottom: 16px;
       padding: 14px 16px;
       border-radius: 12px;
       background: #fef2f2;
@@ -190,22 +293,30 @@
         以<strong>北京时间</strong>为输入基准，换算 CF / MT 项目的跨天服时间与正式服时间。
       </p>
 
-      <div class="guide">
-        <h3>换算说明</h3>
-        <ul>
-          <li><strong>跨天服</strong>：游戏内跨天重置使用的服务器时间，分夏令时与冬令时两套规则，各含早上、下午两个跨天节点。</li>
-          <li><strong>夏令时跨天服</strong>：早上 <strong>9:00</strong> 跨天、下午 <strong>18:00</strong> 跨天。</li>
-          <li><strong>冬令时跨天服</strong>：早上 <strong>10:00</strong> 跨天、下午 <strong>19:00</strong> 跨天。</li>
-          <li><strong>正式服时间</strong>：线上正式服使用的时间，按美国东部夏令时（EDT）/ 冬令时（EST）自动切换偏移。</li>
-        </ul>
+      <div class="guide-grid">
+        <div class="guide-item">
+          <strong>跨天服</strong>
+          游戏内跨天重置使用的服务器时间，分夏令时与冬令时两套规则。
+        </div>
+        <div class="guide-item">
+          <strong>夏令时跨天服</strong>
+          早上 9:00 跨天、下午 18:00 跨天。
+        </div>
+        <div class="guide-item">
+          <strong>冬令时跨天服</strong>
+          早上 10:00 跨天、下午 19:00 跨天。
+        </div>
+        <div class="guide-item">
+          <strong>正式服时间</strong>
+          按美国东部夏令时（EDT）/ 冬令时（EST）自动切换偏移。
+        </div>
       </div>
 
-      <div class="project-tabs" role="tablist" aria-label="项目选择">
-        <button type="button" class="active" data-project="cf" role="tab" aria-selected="true">CF 项目</button>
-        <button type="button" data-project="mt" role="tab" aria-selected="false">MT 项目</button>
-      </div>
-
-      <div class="input-grid">
+      <div class="control-bar">
+        <div class="project-tabs" role="tablist" aria-label="项目选择">
+          <button type="button" class="active" data-project="cf" role="tab" aria-selected="true">CF</button>
+          <button type="button" data-project="mt" role="tab" aria-selected="false">MT</button>
+        </div>
         <div>
           <label for="inputDate">日期</label>
           <input id="inputDate" type="date">
@@ -214,102 +325,111 @@
           <label for="inputTime">时间</label>
           <input id="inputTime" type="time" step="1">
         </div>
-      </div>
-
-      <div class="actions">
-        <button class="primary" type="button" id="useNow">使用当前北京时间</button>
+        <div class="actions">
+          <button class="primary" type="button" id="useNow">当前北京时间</button>
+        </div>
       </div>
 
       <div id="errorBox" class="error hidden" role="alert"></div>
 
       <div id="cfResult" class="result-card">
         <h2>CF 项目换算结果</h2>
-        <div class="result-row">
-          <span class="result-label">北京时间</span>
-          <span class="result-value" id="cfBeijing">—</span>
+        <div class="beijing-banner">
+          <span class="beijing-label">北京时间</span>
+          <span class="beijing-value" id="cfBeijing">—</span>
         </div>
 
-        <div class="result-group">
-          <h3>跨天服 · 夏令时 <span class="badge badge-summer">EDT</span></h3>
-          <div class="result-row">
-            <span class="result-label">早上 9:00 跨天</span>
-            <span class="result-value" id="cfSummerAm">—</span>
-            <span class="result-sub">比北京时间慢 3 小时</span>
-          </div>
-          <div class="result-row">
-            <span class="result-label">下午 18:00 跨天</span>
-            <span class="result-value" id="cfSummerPm">—</span>
-            <span class="result-sub">比北京时间快 6 小时</span>
-          </div>
+        <div class="crossover-panels">
+          <section class="panel">
+            <h3>跨天服 · 夏令时 <span class="badge badge-summer">EDT</span></h3>
+            <div class="time-grid">
+              <div class="time-cell">
+                <div class="time-label">早上 9:00 跨天</div>
+                <div class="time-value" id="cfSummerAm">—</div>
+                <div class="time-note">比北京时间慢 3 小时</div>
+              </div>
+              <div class="time-cell">
+                <div class="time-label">下午 18:00 跨天</div>
+                <div class="time-value" id="cfSummerPm">—</div>
+                <div class="time-note">比北京时间快 6 小时</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h3>跨天服 · 冬令时 <span class="badge badge-winter">EST</span></h3>
+            <div class="time-grid">
+              <div class="time-cell">
+                <div class="time-label">早上 10:00 跨天</div>
+                <div class="time-value" id="cfWinterAm">—</div>
+                <div class="time-note">比北京时间慢 2 小时</div>
+              </div>
+              <div class="time-cell">
+                <div class="time-label">下午 19:00 跨天</div>
+                <div class="time-value" id="cfWinterPm">—</div>
+                <div class="time-note">比北京时间快 7 小时</div>
+              </div>
+            </div>
+          </section>
         </div>
 
-        <div class="result-group">
-          <h3>跨天服 · 冬令时 <span class="badge badge-winter">EST</span></h3>
-          <div class="result-row">
-            <span class="result-label">早上 10:00 跨天</span>
-            <span class="result-value" id="cfWinterAm">—</span>
-            <span class="result-sub">比北京时间慢 2 小时</span>
-          </div>
-          <div class="result-row">
-            <span class="result-label">下午 19:00 跨天</span>
-            <span class="result-value" id="cfWinterPm">—</span>
-            <span class="result-sub">比北京时间快 7 小时</span>
-          </div>
-        </div>
-
-        <div class="result-group">
+        <section class="formal-panel">
           <h3>正式服时间</h3>
-          <div class="result-row">
-            <span class="result-label">当前正式服</span>
-            <span class="result-value" id="cfFormal">—</span>
-            <span class="result-sub" id="cfFormalNote">—</span>
+          <div class="formal-content">
+            <div class="formal-value" id="cfFormal">—</div>
+            <div class="formal-note" id="cfFormalNote">—</div>
           </div>
-        </div>
+        </section>
       </div>
 
       <div id="mtResult" class="result-card hidden">
         <h2>MT 项目换算结果</h2>
-        <div class="result-row">
-          <span class="result-label">北京时间</span>
-          <span class="result-value" id="mtBeijing">—</span>
+        <div class="beijing-banner">
+          <span class="beijing-label">北京时间</span>
+          <span class="beijing-value" id="mtBeijing">—</span>
         </div>
 
-        <div class="result-group">
-          <h3>跨天服 · 夏令时 <span class="badge badge-summer">EDT</span></h3>
-          <div class="result-row">
-            <span class="result-label">早上 9:00 跨天</span>
-            <span class="result-value" id="mtSummerAm">—</span>
-            <span class="result-sub">比北京时间慢 3 小时</span>
-          </div>
-          <div class="result-row">
-            <span class="result-label">下午 18:00 跨天</span>
-            <span class="result-value" id="mtSummerPm">—</span>
-            <span class="result-sub">比北京时间快 6 小时</span>
-          </div>
+        <div class="crossover-panels">
+          <section class="panel">
+            <h3>跨天服 · 夏令时 <span class="badge badge-summer">EDT</span></h3>
+            <div class="time-grid">
+              <div class="time-cell">
+                <div class="time-label">早上 9:00 跨天</div>
+                <div class="time-value" id="mtSummerAm">—</div>
+                <div class="time-note">比北京时间慢 3 小时</div>
+              </div>
+              <div class="time-cell">
+                <div class="time-label">下午 18:00 跨天</div>
+                <div class="time-value" id="mtSummerPm">—</div>
+                <div class="time-note">比北京时间快 6 小时</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h3>跨天服 · 冬令时 <span class="badge badge-winter">EST</span></h3>
+            <div class="time-grid">
+              <div class="time-cell">
+                <div class="time-label">早上 10:00 跨天</div>
+                <div class="time-value" id="mtWinterAm">—</div>
+                <div class="time-note">比北京时间慢 2 小时</div>
+              </div>
+              <div class="time-cell">
+                <div class="time-label">下午 19:00 跨天</div>
+                <div class="time-value" id="mtWinterPm">—</div>
+                <div class="time-note">比北京时间快 7 小时</div>
+              </div>
+            </div>
+          </section>
         </div>
 
-        <div class="result-group">
-          <h3>跨天服 · 冬令时 <span class="badge badge-winter">EST</span></h3>
-          <div class="result-row">
-            <span class="result-label">早上 10:00 跨天</span>
-            <span class="result-value" id="mtWinterAm">—</span>
-            <span class="result-sub">比北京时间慢 2 小时</span>
-          </div>
-          <div class="result-row">
-            <span class="result-label">下午 19:00 跨天</span>
-            <span class="result-value" id="mtWinterPm">—</span>
-            <span class="result-sub">比北京时间快 7 小时</span>
-          </div>
-        </div>
-
-        <div class="result-group">
+        <section class="formal-panel">
           <h3>正式服时间</h3>
-          <div class="result-row">
-            <span class="result-label">当前正式服</span>
-            <span class="result-value" id="mtFormal">—</span>
-            <span class="result-sub" id="mtFormalNote">—</span>
+          <div class="formal-content">
+            <div class="formal-value" id="mtFormal">—</div>
+            <div class="formal-note" id="mtFormalNote">—</div>
           </div>
-        </div>
+        </section>
       </div>
     </main>
   </div>
