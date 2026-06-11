@@ -149,8 +149,8 @@
     <main>
       <h1>游戏时间转换</h1>
       <p class="desc">
-        输入北京时间，自动换算 CF / MT 项目的<strong>跨天服时间</strong>（9 点跨天 / 6 点跨天）与<strong>正式服时间</strong>。
-        正式服时间按夏令时（EDT）与冬令时（EST）自动切换。
+        输入北京时间，自动换算 CF / MT 项目的<strong>跨天服时间</strong>与<strong>正式服时间</strong>。
+        跨天服区分夏令时早上 9 点跨天与下午 6 点跨天；正式服时间按夏令时（EDT）与冬令时（EST）自动切换。
       </p>
 
       <div class="project-tabs" role="tablist" aria-label="项目选择">
@@ -176,8 +176,8 @@
       </div>
 
       <div class="anchor">
-        <strong>9 点跨天：</strong>北京时间 24 日 12:00 → 跨天服 24 日 09:00<br>
-        <strong>6 点跨天：</strong>北京时间 24 日 12:00 → 跨天服 24 日 06:00<br>
+        <strong>9 点跨天（夏令时 · 早上 9:00）：</strong>北京时间 24 日 12:00 → 跨天服 24 日 09:00<br>
+        <strong>6 点跨天（下午 18:00）：</strong>北京时间 24 日 12:00 → 跨天服 24 日 18:00<br>
         <strong>正式服（冬令时 EST）：</strong>北京时间 24 日 12:00 → 23 日 23:00<br>
         <strong>正式服（夏令时 EDT）：</strong>北京时间 24 日 12:00 → 24 日 00:00
       </div>
@@ -193,12 +193,12 @@
         <div class="result-row">
           <span class="result-label">9 点跨天</span>
           <span class="result-value" id="cfServer9">—</span>
-          <span class="result-sub">比北京时间慢 3 小时</span>
+          <span class="result-sub" id="cfServer9Note">夏令时 · 跨天服早上 9:00 跨天 · 比北京时间慢 3 小时</span>
         </div>
         <div class="result-row">
           <span class="result-label">6 点跨天</span>
           <span class="result-value" id="cfServer6">—</span>
-          <span class="result-sub">比北京时间慢 6 小时</span>
+          <span class="result-sub" id="cfServer6Note">跨天服下午 18:00 跨天 · 比北京时间快 6 小时</span>
         </div>
         <div class="result-row">
           <span class="result-label">正式服时间</span>
@@ -216,12 +216,12 @@
         <div class="result-row">
           <span class="result-label">9 点跨天</span>
           <span class="result-value" id="mtServer9">—</span>
-          <span class="result-sub">比北京时间慢 3 小时</span>
+          <span class="result-sub" id="mtServer9Note">夏令时 · 跨天服早上 9:00 跨天 · 比北京时间慢 3 小时</span>
         </div>
         <div class="result-row">
           <span class="result-label">6 点跨天</span>
           <span class="result-value" id="mtServer6">—</span>
-          <span class="result-sub">比北京时间慢 6 小时</span>
+          <span class="result-sub" id="mtServer6Note">跨天服下午 18:00 跨天 · 比北京时间快 6 小时</span>
         </div>
         <div class="result-row">
           <span class="result-label">正式服时间</span>
@@ -235,7 +235,7 @@
   <script>
     const BEIJING_TZ = "Asia/Shanghai";
     const EASTERN_TZ = "America/New_York";
-    const SERVER_9_OFFSET_HOURS = 3;
+    const SERVER_9_OFFSET_HOURS = -3;
     const SERVER_6_OFFSET_HOURS = 6;
 
     const inputDate = document.getElementById("inputDate");
@@ -337,8 +337,8 @@
     }
 
     function renderProject(prefix, beijingDate) {
-      const server9Date = addHours(beijingDate, -SERVER_9_OFFSET_HOURS);
-      const server6Date = addHours(beijingDate, -SERVER_6_OFFSET_HOURS);
+      const server9Date = addHours(beijingDate, SERVER_9_OFFSET_HOURS);
+      const server6Date = addHours(beijingDate, SERVER_6_OFFSET_HOURS);
       const formalOffset = getFormalOffsetHours(beijingDate);
       const formalDate = addHours(beijingDate, -formalOffset);
       const season = getFormalSeasonLabel(beijingDate);
