@@ -87,15 +87,15 @@
       <div class="inputs">
         <div>
           <label for="numberA">id</label>
-          <input id="numberA" value="11589" inputmode="numeric" autocomplete="off" spellcheck="false">
+          <input id="numberA" placeholder="请在此输入" inputmode="numeric" autocomplete="off" spellcheck="false">
         </div>
         <div>
           <label for="numberB">第二个数（第一次取模）</label>
-          <input id="numberB" value="31" inputmode="numeric" autocomplete="off" spellcheck="false">
+          <input id="numberB" placeholder="请在此输入" inputmode="numeric" autocomplete="off" spellcheck="false">
         </div>
         <div>
           <label for="numberC">第三个数（第二次取模）</label>
-          <input id="numberC" value="2" inputmode="numeric" autocomplete="off" spellcheck="false">
+          <input id="numberC" placeholder="请在此输入" inputmode="numeric" autocomplete="off" spellcheck="false">
         </div>
       </div>
 
@@ -158,6 +158,18 @@
       stepsBox.innerHTML = "";
     }
 
+    function renderIdle() {
+      resultBox.className = "result";
+      resultBox.textContent = "请输入数字后开始计算";
+      stepsBox.innerHTML = "";
+    }
+
+    function isAllEmpty() {
+      return !numberAInput.value.trim() &&
+        !numberBInput.value.trim() &&
+        !numberCInput.value.trim();
+    }
+
     function renderFormula() {
       const a = numberAInput.value.trim() || "?";
       const b = numberBInput.value.trim() || "?";
@@ -167,6 +179,10 @@
 
     function calculate() {
       renderFormula();
+      if (isAllEmpty()) {
+        renderIdle();
+        return;
+      }
       try {
         const { numberA, numberB, numberC } = readValues();
         const firstResult = numberA % numberB;
@@ -205,7 +221,8 @@
       });
     });
 
-    calculate();
+    renderFormula();
+    renderIdle();
   </script>
 </body>
 </html>

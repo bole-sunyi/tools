@@ -120,7 +120,7 @@
       <div class="input-row">
         <div>
           <label for="valueInput">输入数值</label>
-          <input id="valueInput" autocomplete="off" spellcheck="false" placeholder="例如 FF、1010、377">
+          <input id="valueInput" autocomplete="off" spellcheck="false" placeholder="请在此输入">
         </div>
         <div>
           <label for="baseSelect">输入进制</label>
@@ -276,7 +276,22 @@
       return negative ? `-${output}` : output;
     }
 
+    function clearResults() {
+      hideError();
+      for (const base of BASES) {
+        document.getElementById(`out${base}`).textContent = "—";
+      }
+      resultGrid.querySelectorAll(".result-item").forEach((item) => {
+        item.classList.remove("active");
+      });
+    }
+
     function convert() {
+      if (!valueInput.value.trim()) {
+        clearResults();
+        return;
+      }
+
       try {
         const inputBase = Number(baseSelect.value);
         const number = parseToBigInt(valueInput.value, inputBase);
@@ -336,13 +351,7 @@
 
     document.getElementById("clearBtn").addEventListener("click", () => {
       valueInput.value = "";
-      hideError();
-      for (const base of BASES) {
-        document.getElementById(`out${base}`).textContent = "—";
-      }
-      resultGrid.querySelectorAll(".result-item").forEach((item) => {
-        item.classList.remove("active");
-      });
+      clearResults();
       valueInput.focus();
     });
 
@@ -350,8 +359,7 @@
       button.addEventListener("click", () => copyValue(button.dataset.copy));
     });
 
-    valueInput.value = "255";
-    convert();
+
   </script>
 </body>
 </html>
