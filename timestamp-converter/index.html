@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>时间戳转换</title>
+  <link rel="stylesheet" href="../assets/common.css">
+  <style>
+    .now-card {
+      margin-bottom: 24px;
+      padding: 18px;
+      border-radius: 14px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+    }
+
+    .now-card h2 {
+      margin: 0 0 12px;
+      font-size: 16px;
+      color: #1d4ed8;
+    }
+
+    .now-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .now-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .now-item {
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .now-label {
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .now-value {
+      font-size: 22px;
+      font-weight: 800;
+      word-break: break-all;
+      color: #0f172a;
+    }
+
+    .section {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .section h2 {
+      margin: 0 0 16px;
+      font-size: 18px;
+      color: #1f2937;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    @media (max-width: 640px) {
+      .input-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .input-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .input-grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .result-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+    }
+
+    .result-row {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 8px 16px;
+      padding: 8px 0;
+      align-items: baseline;
+    }
+
+    .result-row + .result-row {
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .result-label {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .result-value {
+      font-size: 17px;
+      font-weight: 700;
+      word-break: break-all;
+      color: #0f172a;
+    }
+
+    .error {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #fef2f2;
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <div class="site-nav-inner">
+      <a class="site-brand" href="../">Tools</a>
+      <a href="../mod-calculator/">Mod 取模</a>
+      <a href="../game-time-converter/">游戏时间</a>
+      <a href="../timestamp-converter/" class="active">时间戳</a>
+      <a href="../radix-converter/">进制转换</a>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+    <main>
+      <h1>时间戳转换</h1>
+      <p class="desc">查看当前时间戳，或在时间戳与日期时间之间互相转换。支持秒级与毫秒级。</p>
+
+      <div class="now-card">
+        <h2>当前时间戳</h2>
+        <div class="now-grid">
+          <div class="now-item">
+            <div class="now-label">秒（s）</div>
+            <div class="now-value" id="nowSeconds">—</div>
+          </div>
+          <div class="now-item">
+            <div class="now-label">毫秒（ms）</div>
+            <div class="now-value" id="nowMillis">—</div>
+          </div>
+        </div>
+        <div class="result-box" style="margin-top: 12px; margin-bottom: 0;">
+          <div class="result-row">
+            <span class="result-label">北京时间</span>
+            <span class="result-value" id="nowBeijing">—</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">UTC</span>
+            <span class="result-value" id="nowUtc">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>时间戳 → 日期时间</h2>
+        <div class="input-grid">
+          <div>
+            <label for="tsInput">时间戳</label>
+            <input id="tsInput" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="例如 1719201600">
+          </div>
+          <div>
+            <label for="tsUnit">单位</label>
+            <select id="tsUnit">
+              <option value="auto">自动识别</option>
+              <option value="s">秒（s）</option>
+              <option value="ms">毫秒（ms）</option>
+            </select>
+          </div>
+        </div>
+        <div id="tsToDateError" class="error hidden" role="alert"></div>
+        <div id="tsToDateResult" class="result-box hidden">
+          <div class="result-row">
+            <span class="result-label">毫秒</span>
+            <span class="result-value" id="outMillis">—</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">秒</span>
+            <span class="result-value" id="outSeconds">—</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">北京时间</span>
+            <span class="result-value" id="outBeijing">—</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">UTC</span>
+            <span class="result-value" id="outUtc">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>日期时间 → 时间戳</h2>
+        <div class="input-grid-3">
+          <div>
+            <label for="dateInput">日期</label>
+            <input id="dateInput" type="date">
+          </div>
+          <div>
+            <label for="timeInput">时间</label>
+            <input id="timeInput" type="time" step="1">
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" type="button" id="useNowBeijing">填入当前北京时间</button>
+        </div>
+        <div id="dateToTsError" class="error hidden" role="alert"></div>
+        <div id="dateToTsResult" class="result-box hidden">
+          <div class="result-row">
+            <span class="result-label">秒（s）</span>
+            <span class="result-value" id="outTsSeconds">—</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">毫秒（ms）</span>
+            <span class="result-value" id="outTsMillis">—</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const BEIJING_TZ = "Asia/Shanghai";
+    const UTC_TZ = "UTC";
+
+    const tsInput = document.getElementById("tsInput");
+    const tsUnit = document.getElementById("tsUnit");
+    const dateInput = document.getElementById("dateInput");
+    const timeInput = document.getElementById("timeInput");
+
+    function formatParts(date, timeZone) {
+      const parts = new Intl.DateTimeFormat("zh-CN", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      }).formatToParts(date);
+
+      const map = {};
+      for (const part of parts) {
+        if (part.type !== "literal") {
+          map[part.type] = part.value;
+        }
+      }
+      return map;
+    }
+
+    function formatDateTime(date, timeZone) {
+      const p = formatParts(date, timeZone);
+      return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}`;
+    }
+
+    function getTimeZoneOffsetMinutes(date, timeZone) {
+      const parts = formatParts(date, timeZone);
+      const asUtc = Date.UTC(
+        Number(parts.year),
+        Number(parts.month) - 1,
+        Number(parts.day),
+        Number(parts.hour),
+        Number(parts.minute),
+        Number(parts.second)
+      );
+      return (asUtc - date.getTime()) / 60000;
+    }
+
+    function zonedTimeToUtc(year, month, day, hour, minute, second, timeZone) {
+      const utcGuess = Date.UTC(year, month - 1, day, hour, minute, second);
+      const offsetMinutes = getTimeZoneOffsetMinutes(new Date(utcGuess), timeZone);
+      return new Date(utcGuess - offsetMinutes * 60000);
+    }
+
+    function showError(box, resultBox, message) {
+      box.textContent = message;
+      box.classList.remove("hidden");
+      resultBox.classList.add("hidden");
+    }
+
+    function hideError(box) {
+      box.classList.add("hidden");
+      box.textContent = "";
+    }
+
+    function updateNow() {
+      const now = new Date();
+      const ms = now.getTime();
+      document.getElementById("nowSeconds").textContent = Math.floor(ms / 1000);
+      document.getElementById("nowMillis").textContent = ms;
+      document.getElementById("nowBeijing").textContent = formatDateTime(now, BEIJING_TZ);
+      document.getElementById("nowUtc").textContent = formatDateTime(now, UTC_TZ);
+    }
+
+    function parseTimestampToMillis(raw, unit) {
+      const value = raw.trim();
+      if (!value) {
+        throw new Error("请输入时间戳");
+      }
+      if (!/^-?\d+$/.test(value)) {
+        throw new Error("时间戳只能包含数字");
+      }
+
+      if (unit === "ms") {
+        return Number(value);
+      }
+      if (unit === "s") {
+        return Number(value) * 1000;
+      }
+
+      const digits = value.replace("-", "").length;
+      if (digits > 11) {
+        return Number(value);
+      }
+      return Number(value) * 1000;
+    }
+
+    function convertTsToDate() {
+      const errorBox = document.getElementById("tsToDateError");
+      const resultBox = document.getElementById("tsToDateResult");
+
+      try {
+        const millis = parseTimestampToMillis(tsInput.value, tsUnit.value);
+        if (!Number.isFinite(millis)) {
+          throw new Error("时间戳数值无效");
+        }
+
+        const date = new Date(millis);
+        if (Number.isNaN(date.getTime())) {
+          throw new Error("无法解析该时间戳");
+        }
+
+        hideError(errorBox);
+        resultBox.classList.remove("hidden");
+        document.getElementById("outMillis").textContent = millis;
+        document.getElementById("outSeconds").textContent = Math.trunc(millis / 1000);
+        document.getElementById("outBeijing").textContent = formatDateTime(date, BEIJING_TZ);
+        document.getElementById("outUtc").textContent = formatDateTime(date, UTC_TZ);
+      } catch (error) {
+        showError(errorBox, resultBox, error.message || String(error));
+      }
+    }
+
+    function convertDateToTs() {
+      const errorBox = document.getElementById("dateToTsError");
+      const resultBox = document.getElementById("dateToTsResult");
+
+      try {
+        if (!dateInput.value || !timeInput.value) {
+          throw new Error("请填写完整的日期和时间");
+        }
+
+        const [year, month, day] = dateInput.value.split("-").map(Number);
+        const timeParts = timeInput.value.split(":");
+        const hour = Number(timeParts[0]);
+        const minute = Number(timeParts[1]);
+        const second = Number(timeParts[2] || 0);
+
+        const date = zonedTimeToUtc(year, month, day, hour, minute, second, BEIJING_TZ);
+        const millis = date.getTime();
+        if (Number.isNaN(millis)) {
+          throw new Error("无法解析该日期时间");
+        }
+
+        hideError(errorBox);
+        resultBox.classList.remove("hidden");
+        document.getElementById("outTsSeconds").textContent = Math.trunc(millis / 1000);
+        document.getElementById("outTsMillis").textContent = millis;
+      } catch (error) {
+        showError(errorBox, resultBox, error.message || String(error));
+      }
+    }
+
+    function fillNowBeijing() {
+      const now = new Date();
+      const parts = formatParts(now, BEIJING_TZ);
+      dateInput.value = `${parts.year}-${parts.month}-${parts.day}`;
+      timeInput.value = `${parts.hour}:${parts.minute}:${parts.second}`;
+      convertDateToTs();
+    }
+
+    document.getElementById("useNowBeijing").addEventListener("click", fillNowBeijing);
+    tsInput.addEventListener("input", convertTsToDate);
+    tsUnit.addEventListener("change", convertTsToDate);
+    dateInput.addEventListener("change", convertDateToTs);
+    timeInput.addEventListener("input", convertDateToTs);
+
+    updateNow();
+    setInterval(updateNow, 1000);
+    fillNowBeijing();
+    tsInput.value = String(Math.floor(Date.now() / 1000));
+    convertTsToDate();
+  </script>
+</body>
+</html>

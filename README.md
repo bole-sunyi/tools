@@ -15,6 +15,8 @@ https://bole-sunyi.github.io/tools/
 | 工具首页 | `/` |
 | Mod 取模计算器 | `/mod-calculator/` |
 | 游戏时间转换 | `/game-time-converter/` |
+| 时间戳转换 | `/timestamp-converter/` |
+| 进制转换 | `/radix-converter/` |
 
 ## 游戏时间转换说明
 
