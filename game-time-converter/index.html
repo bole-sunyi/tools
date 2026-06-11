@@ -320,10 +320,12 @@
         <div>
           <label for="inputDate">日期</label>
           <input id="inputDate" type="date">
+          <p class="field-tip">请选择日期</p>
         </div>
         <div>
           <label for="inputTime">时间</label>
           <input id="inputTime" type="time" step="1">
+          <p class="field-tip">请选择时间</p>
         </div>
         <div class="actions">
           <button class="primary" type="button" id="useNow">当前北京时间</button>
@@ -377,7 +379,7 @@
           <h3>正式服时间</h3>
           <div class="formal-content">
             <div class="formal-value" id="cfFormal">—</div>
-            <div class="formal-note" id="cfFormalNote">—</div>
+            <div class="formal-note" id="cfFormalNote">请输入日期和时间后开始换算</div>
           </div>
         </section>
       </div>
@@ -427,7 +429,7 @@
           <h3>正式服时间</h3>
           <div class="formal-content">
             <div class="formal-value" id="mtFormal">—</div>
-            <div class="formal-note" id="mtFormalNote">—</div>
+            <div class="formal-note" id="mtFormalNote">请输入日期和时间后开始换算</div>
           </div>
         </section>
       </div>
@@ -537,6 +539,22 @@
       return new Date(date.getTime() + hours * 3600000);
     }
 
+    function resetResults() {
+      const fields = [
+        "Beijing", "SummerAm", "SummerPm", "WinterAm", "WinterPm", "Formal",
+      ];
+      for (const prefix of ["cf", "mt"]) {
+        for (const field of fields) {
+          document.getElementById(`${prefix}${field}`).textContent = "—";
+        }
+        document.getElementById(`${prefix}FormalNote`).textContent = "请输入日期和时间后开始换算";
+      }
+    }
+
+    function isInputEmpty() {
+      return !inputDate.value || !inputTime.value;
+    }
+
     function renderProject(prefix, beijingDate) {
       const formalOffset = getFormalOffsetHours(beijingDate);
       const formalDate = addHours(beijingDate, -formalOffset);
@@ -569,6 +587,11 @@
     }
 
     function calculate() {
+      if (isInputEmpty()) {
+        hideError();
+        resetResults();
+        return;
+      }
       try {
         const beijingDate = parseBeijingInput();
         hideError();
@@ -605,7 +628,7 @@
     inputDate.addEventListener("change", calculate);
     inputTime.addEventListener("input", calculate);
 
-    setBeijingNow();
+    resetResults();
   </script>
 </body>
 </html>

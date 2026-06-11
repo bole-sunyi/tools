@@ -204,7 +204,7 @@
           <div class="panel-fields row-2">
             <div>
               <label for="tsInput">时间戳</label>
-              <input id="tsInput" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="例如 1719201600">
+              <input id="tsInput" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="请在此输入">
             </div>
             <div>
               <label for="tsUnit">单位</label>
@@ -244,10 +244,12 @@
             <div>
               <label for="dateInput">日期</label>
               <input id="dateInput" type="date">
+              <p class="field-tip">请选择日期</p>
             </div>
             <div>
               <label for="timeInput">时间</label>
               <input id="timeInput" type="time" step="1">
+              <p class="field-tip">请选择时间</p>
             </div>
           </div>
           <div class="actions">
@@ -372,6 +374,12 @@
       const errorBox = document.getElementById("tsToDateError");
       const resultBox = document.getElementById("tsToDateResult");
 
+      if (!tsInput.value.trim()) {
+        hideError(errorBox);
+        resultBox.classList.add("hidden");
+        return;
+      }
+
       try {
         const millis = parseTimestampToMillis(tsInput.value, tsUnit.value);
         if (!Number.isFinite(millis)) {
@@ -398,10 +406,13 @@
       const errorBox = document.getElementById("dateToTsError");
       const resultBox = document.getElementById("dateToTsResult");
 
+      if (!dateInput.value || !timeInput.value) {
+        hideError(errorBox);
+        resultBox.classList.add("hidden");
+        return;
+      }
+
       try {
-        if (!dateInput.value || !timeInput.value) {
-          throw new Error("请填写完整的日期和时间");
-        }
 
         const [year, month, day] = dateInput.value.split("-").map(Number);
         const timeParts = timeInput.value.split(":");
@@ -440,9 +451,6 @@
 
     updateNow();
     setInterval(updateNow, 1000);
-    fillNowBeijing();
-    tsInput.value = String(Math.floor(Date.now() / 1000));
-    convertTsToDate();
   </script>
 </body>
 </html>
