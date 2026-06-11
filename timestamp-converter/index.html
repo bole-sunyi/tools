@@ -243,13 +243,11 @@
           <div class="panel-fields row-2">
             <div>
               <label for="dateInput">日期</label>
-              <input id="dateInput" type="date">
-              <p class="field-tip">请选择日期</p>
+              <input id="dateInput" type="text" autocomplete="off" spellcheck="false" placeholder="请在此输入，如 2024-06-11">
             </div>
             <div>
               <label for="timeInput">时间</label>
-              <input id="timeInput" type="time" step="1">
-              <p class="field-tip">请选择时间</p>
+              <input id="timeInput" type="text" autocomplete="off" spellcheck="false" placeholder="请在此输入，如 12:00:00">
             </div>
           </div>
           <div class="actions">
@@ -273,6 +271,7 @@
     </main>
   </div>
 
+  <script src="../assets/datetime.js"></script>
   <script>
     const BEIJING_TZ = "Asia/Shanghai";
     const UTC_TZ = "UTC";
@@ -406,19 +405,15 @@
       const errorBox = document.getElementById("dateToTsError");
       const resultBox = document.getElementById("dateToTsResult");
 
-      if (!dateInput.value || !timeInput.value) {
+      if (!dateInput.value.trim() || !timeInput.value.trim()) {
         hideError(errorBox);
         resultBox.classList.add("hidden");
         return;
       }
 
       try {
-
-        const [year, month, day] = dateInput.value.split("-").map(Number);
-        const timeParts = timeInput.value.split(":");
-        const hour = Number(timeParts[0]);
-        const minute = Number(timeParts[1]);
-        const second = Number(timeParts[2] || 0);
+        const { year, month, day } = parseDateText(dateInput.value);
+        const { hour, minute, second } = parseTimeText(timeInput.value);
 
         const date = zonedTimeToUtc(year, month, day, hour, minute, second, BEIJING_TZ);
         const millis = date.getTime();
@@ -438,15 +433,15 @@
     function fillNowBeijing() {
       const now = new Date();
       const parts = formatParts(now, BEIJING_TZ);
-      dateInput.value = `${parts.year}-${parts.month}-${parts.day}`;
-      timeInput.value = `${parts.hour}:${parts.minute}:${parts.second}`;
+      dateInput.value = formatDateText(parts);
+      timeInput.value = formatTimeText(parts);
       convertDateToTs();
     }
 
     document.getElementById("useNowBeijing").addEventListener("click", fillNowBeijing);
     tsInput.addEventListener("input", convertTsToDate);
     tsUnit.addEventListener("change", convertTsToDate);
-    dateInput.addEventListener("change", convertDateToTs);
+    dateInput.addEventListener("input", convertDateToTs);
     timeInput.addEventListener("input", convertDateToTs);
 
     updateNow();
