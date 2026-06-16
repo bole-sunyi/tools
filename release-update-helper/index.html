@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>发布更新内容生成</title>
+  <link rel="stylesheet" href="../assets/common.css">
+  <style>
+    .tool-panel {
+      display: grid;
+      gap: 18px;
+      margin-top: 8px;
+    }
+
+    .panel {
+      padding: 20px;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      background: #fafafa;
+    }
+
+    .project-options {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .project-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .project-option input {
+      width: auto;
+      margin: 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 260px;
+      padding: 14px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.7;
+      resize: vertical;
+      outline: none;
+      background: #fff;
+    }
+
+    textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .status {
+      min-height: 24px;
+      color: #4b5563;
+      line-height: 1.5;
+    }
+
+    .status.error {
+      color: #dc2626;
+      font-weight: 700;
+    }
+
+    .tips {
+      margin: 0;
+      color: #6b7280;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <div class="site-nav-inner">
+      <a class="site-brand" href="../">Tools</a>
+      <a href="../mod-calculator/">Mod 取模</a>
+      <a href="../game-time-converter/">游戏时间</a>
+      <a href="../timestamp-converter/">时间戳</a>
+      <a href="../radix-converter/">进制转换</a>
+      <a class="active" href="./">发布更新</a>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+    <main>
+      <h1>发布更新内容生成</h1>
+      <p class="desc">上传 CF / MT 发布计划 Excel，读取 A、B 两列从第 3 行开始的内容，生成带序号的更新文本并复制。</p>
+
+      <div class="tool-panel">
+        <section class="panel">
+          <label>项目</label>
+          <div class="project-options">
+            <label class="project-option">
+              <input type="radio" name="project" value="CF" checked>
+              CF
+            </label>
+            <label class="project-option">
+              <input type="radio" name="project" value="MT">
+              MT
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <label for="excel-file">发布计划 Excel</label>
+          <input id="excel-file" type="file" accept=".xlsx,.xls">
+          <p class="field-tip">支持文件名类似 <code>CF项目组__发布计划_*.xlsx</code> 或 <code>MT项目组__发布计划_*.xlsx</code>。</p>
+        </section>
+
+        <div class="actions">
+          <button class="primary" type="button" id="generate-btn">生成内容</button>
+          <button class="secondary" type="button" id="copy-btn">复制结果</button>
+          <button class="secondary" type="button" id="clear-btn">清空</button>
+        </div>
+
+        <section>
+          <label for="result">生成结果</label>
+          <textarea id="result" placeholder="生成后的更新内容会显示在这里"></textarea>
+        </section>
+
+        <p class="status" id="status"></p>
+
+        <section class="panel">
+          <p class="tips">
+            生成规则与原脚本一致：标题为“当前月日 + 项目 + 更新内容”，例如 <code>6月16日CF 更新内容：</code>；
+            明细从 Excel 第 3 行开始读取 A、B 两列，两列都有内容时拼接为一行，并自动添加 <code>1、</code> 序号。
+          </p>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    const fileInput = document.getElementById('excel-file');
+    const result = document.getElementById('result');
+    const statusEl = document.getElementById('status');
+    const generateBtn = document.getElementById('generate-btn');
+    const copyBtn = document.getElementById('copy-btn');
+    const clearBtn = document.getElementById('clear-btn');
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle('error', isError);
+    }
+
+    function getSelectedProject() {
+      return document.querySelector('input[name="project"]:checked').value;
+    }
+
+    function getDateLabel() {
+      const now = new Date();
+      return `${now.getMonth() + 1}月${now.getDate()}日`;
+    }
+
+    function normalizeCell(value) {
+      return String(value ?? '').trim();
+    }
+
+    async function parseWorkbook(file) {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+
+      if (!sheetName) {
+        throw new Error('Excel 中没有可读取的工作表。');
+      }
+
+      const sheet = workbook.Sheets[sheetName];
+      return XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        defval: '',
+        blankrows: true,
+        raw: false
+      });
+    }
+
+    async function generateContent() {
+      const file = fileInput.files[0];
+
+      if (!file) {
+        setStatus('请先选择发布计划 Excel。', true);
+        return;
+      }
+
+      try {
+        const rows = await parseWorkbook(file);
+        const project = getSelectedProject();
+        const lines = [`${getDateLabel()}${project} 更新内容：`];
+
+        rows.slice(2).forEach((row) => {
+          const first = normalizeCell(row[0]);
+          const second = normalizeCell(row[1]);
+
+          if (first && second) {
+            lines.push(`${lines.length}、${first} ${second}`);
+          }
+        });
+
+        if (lines.length === 1) {
+          result.value = '';
+          setStatus('未读取到有效内容，请确认第 3 行开始的 A、B 两列都有内容。', true);
+          return;
+        }
+
+        result.value = lines.join('\n');
+        await copyResult(false);
+        setStatus(`已生成 ${lines.length - 1} 条${project}更新内容，并复制到剪贴板。`);
+      } catch (error) {
+        result.value = '';
+        setStatus(error.message || '解析 Excel 失败，请确认文件格式。', true);
+      }
+    }
+
+    async function copyResult(showStatus = true) {
+      const text = result.value.trim();
+
+      if (!text) {
+        if (showStatus) {
+          setStatus('没有可复制的内容。', true);
+        }
+        return;
+      }
+
+      await navigator.clipboard.writeText(text);
+
+      if (showStatus) {
+        setStatus('已复制到剪贴板。');
+      }
+    }
+
+    generateBtn.addEventListener('click', generateContent);
+    copyBtn.addEventListener('click', () => copyResult(true));
+    clearBtn.addEventListener('click', () => {
+      fileInput.value = '';
+      result.value = '';
+      setStatus('');
+    });
+  </script>
+</body>
+</html>
