@@ -6,55 +6,161 @@
   <title>手机传文件</title>
   <link rel="stylesheet" href="../assets/common.css">
   <style>
-    .launch-card { margin-top: 24px; padding: 24px; border: 1px solid #dbeafe; border-radius: 16px; background: #eff6ff; }
-    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0; }
-    .action { display: inline-block; padding: 12px 18px; border-radius: 12px; font-weight: 700; text-decoration: none; }
-    .action.primary { color: #fff; background: #2563eb; }
-    .action.secondary { color: #1d4ed8; background: #fff; border: 1px solid #93c5fd; }
-    .system { font-weight: 700; color: #1d4ed8; }
-    .steps { line-height: 1.9; padding-left: 22px; }
+    .panel { margin-top: 24px; padding: 24px; border: 1px solid #dbeafe; border-radius: 16px; background: #f8fbff; }
+    .center { text-align: center; }
+    #qrcode { display: inline-block; padding: 12px; background: #fff; border-radius: 14px; }
+    #qrcode img { display: block; }
+    .status { margin: 16px 0; padding: 12px 14px; border-radius: 10px; background: #eef2ff; color: #3730a3; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 18px 0; }
+    .file-input { margin: 20px 0; }
+    .file-list { list-style: none; padding: 0; margin: 18px 0 0; }
+    .file-list li { margin-top: 10px; padding: 12px; border-radius: 10px; background: #f3f4f6; word-break: break-all; }
+    .progress { height: 7px; margin-top: 8px; overflow: hidden; border-radius: 99px; background: #dbe3ef; }
+    .progress span { display: block; height: 100%; width: 0; background: #2563eb; transition: width .15s; }
     .hidden { display: none; }
+    .tip { color: #6b7280; line-height: 1.7; }
+    .download-link { display: inline-block; margin-top: 8px; color: #2563eb; font-weight: 700; }
   </style>
 </head>
 <body>
   <nav class="site-nav"><div class="site-nav-inner"><a class="site-brand" href="../">Tools</a><a class="active" href="./">手机传文件</a></div></nav>
   <div class="page-wrap"><main>
     <h1>手机传文件</h1>
-    <p class="desc">电脑启动本地服务后生成二维码，手机扫码即可把照片、视频、文档等文件传到电脑桌面。</p>
-    <section class="launch-card">
-      <p>检测到当前设备：<span id="system" class="system">正在识别…</span></p>
+    <p class="desc">电脑生成二维码，手机扫码选择文件，通过浏览器点对点传输。</p>
+
+    <section id="desktop" class="panel center hidden">
+      <h2>用手机扫描二维码</h2>
+      <div id="qrcode"></div>
+      <p id="desktopStatus" class="status">正在创建连接…</p>
       <div class="actions">
-        <a id="mac" class="action primary hidden" href="../start-phone-transfer.command" download>下载 macOS 启动脚本</a>
-        <a id="win" class="action primary hidden" href="../start-phone-transfer.bat" download>下载 Windows 启动脚本</a>
-        <a class="action secondary" href="http://localhost:8787/desktop.html">本地服务已启动，打开二维码</a>
+        <button id="folderButton" class="primary hidden">选择桌面保存目录</button>
+        <button id="refreshButton" class="secondary">重新生成二维码</button>
       </div>
-      <ol class="steps">
-        <li>下载当前系统对应的启动脚本，并放到 <code>tools</code> 仓库根目录。</li>
-        <li><span id="instruction">双击启动脚本</span>，首次运行会自动安装依赖。</li>
-        <li>浏览器会自动打开二维码页面；手机与电脑需连接同一 Wi‑Fi。</li>
-      </ol>
-      <p class="desc">受浏览器安全限制，在线网页不能直接运行电脑上的本地程序，因此首次需要手动运行一次启动脚本。</p>
+      <p id="saveTip" class="tip">收到的文件将由浏览器下载。Chrome / Edge 可以选择桌面目录后直接保存。</p>
+      <ul id="receivedFiles" class="file-list"></ul>
+    </section>
+
+    <section id="phone" class="panel hidden">
+      <h2>选择要发送的文件</h2>
+      <p id="phoneStatus" class="status">正在连接电脑…</p>
+      <input id="fileInput" class="file-input" type="file" multiple>
+      <button id="sendButton" class="primary" disabled>发送到电脑</button>
+      <ul id="sentFiles" class="file-list"></ul>
     </section>
   </main></div>
+
+  <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
-    const value = `${navigator.userAgentData?.platform || ''} ${navigator.platform || ''} ${navigator.userAgent}`.toLowerCase();
-    const isWindows = value.includes('win');
-    const isMac = value.includes('mac');
-    const system = document.getElementById('system');
-    const instruction = document.getElementById('instruction');
-    if (isWindows) {
-      system.textContent = 'Windows';
-      document.getElementById('win').classList.remove('hidden');
-      instruction.textContent = '双击 start-phone-transfer.bat';
-    } else if (isMac) {
-      system.textContent = 'macOS';
-      document.getElementById('mac').classList.remove('hidden');
-      instruction.textContent = '双击 start-phone-transfer.command；如果被拦截，请右键选择“打开”';
-    } else {
-      system.textContent = '其他系统';
-      document.getElementById('mac').classList.remove('hidden');
-      document.getElementById('win').classList.remove('hidden');
+    const params = new URLSearchParams(location.search);
+    const targetPeer = params.get('peer');
+    const peerOptions = { host: '0.peerjs.com', port: 443, path: '/', secure: true };
+    const chunkSize = 256 * 1024;
+    let directoryHandle = null;
+    const incoming = new Map();
+
+    if (targetPeer) startPhone(targetPeer); else startDesktop();
+
+    function startDesktop() {
+      document.getElementById('desktop').classList.remove('hidden');
+      const status = document.getElementById('desktopStatus');
+      if ('showDirectoryPicker' in window) document.getElementById('folderButton').classList.remove('hidden');
+      const peer = new Peer(undefined, peerOptions);
+      peer.on('open', id => {
+        const url = new URL(location.href); url.search = ''; url.searchParams.set('peer', id);
+        const box = document.getElementById('qrcode'); box.innerHTML = '';
+        new QRCode(box, { text: url.href, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
+        status.textContent = '等待手机扫码连接…';
+      });
+      peer.on('connection', connection => {
+        connection.on('open', () => status.textContent = '手机已连接，可以发送文件');
+        connection.on('data', receiveData);
+        connection.on('close', () => status.textContent = '手机连接已断开，可继续扫码重新连接');
+      });
+      peer.on('error', error => status.textContent = `连接失败：${friendlyError(error)}`);
+      document.getElementById('refreshButton').onclick = () => location.reload();
+      document.getElementById('folderButton').onclick = async () => {
+        try {
+          directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'desktop' });
+          document.getElementById('saveTip').textContent = '已选择保存目录，收到文件后将直接写入该目录。';
+        } catch (error) { if (error.name !== 'AbortError') status.textContent = `目录选择失败：${error.message}`; }
+      };
     }
+
+    function startPhone(target) {
+      document.getElementById('phone').classList.remove('hidden');
+      const status = document.getElementById('phoneStatus');
+      const sendButton = document.getElementById('sendButton');
+      const connection = new Peer(undefined, peerOptions).connect(target, { reliable: true, serialization: 'binary' });
+      connection.on('open', () => { status.textContent = '已连接电脑，请选择文件'; sendButton.disabled = false; });
+      connection.on('close', () => { status.textContent = '连接已断开，请在电脑上重新生成二维码'; sendButton.disabled = true; });
+      connection.on('error', error => { status.textContent = `连接失败：${friendlyError(error)}`; sendButton.disabled = true; });
+      sendButton.onclick = async () => {
+        const files = [...document.getElementById('fileInput').files];
+        if (!files.length) return status.textContent = '请先选择文件';
+        sendButton.disabled = true;
+        for (const file of files) await sendFile(connection, file);
+        status.textContent = `发送完成，共 ${files.length} 个文件`;
+        sendButton.disabled = false;
+      };
+    }
+
+    async function sendFile(connection, file) {
+      const id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+      const total = Math.ceil(file.size / chunkSize);
+      const item = addProgress('sentFiles', file.name, file.size);
+      connection.send({ type: 'meta', id, name: file.name, size: file.size, mime: file.type, total });
+      for (let index = 0; index < total; index++) {
+        const data = await file.slice(index * chunkSize, Math.min(file.size, (index + 1) * chunkSize)).arrayBuffer();
+        connection.send({ type: 'chunk', id, index, data });
+        setProgress(item, Math.round((index + 1) / total * 100));
+        if (index % 8 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+      }
+      connection.send({ type: 'end', id });
+    }
+
+    async function receiveData(message) {
+      if (message.type === 'meta') {
+        incoming.set(message.id, { ...message, chunks: [], received: 0, item: addProgress('receivedFiles', message.name, message.size) });
+      } else if (message.type === 'chunk') {
+        const file = incoming.get(message.id); if (!file) return;
+        file.chunks[message.index] = message.data; file.received++;
+        setProgress(file.item, Math.round(file.received / file.total * 100));
+      } else if (message.type === 'end') {
+        const file = incoming.get(message.id); if (!file) return;
+        const blob = new Blob(file.chunks, { type: file.mime || 'application/octet-stream' });
+        await saveFile(file.name, blob, file.item); incoming.delete(message.id);
+      }
+    }
+
+    async function saveFile(name, blob, item) {
+      if (directoryHandle) {
+        const finalName = await uniqueName(directoryHandle, name);
+        const handle = await directoryHandle.getFileHandle(finalName, { create: true });
+        const writable = await handle.createWritable(); await writable.write(blob); await writable.close();
+        item.querySelector('.result').textContent = `已保存：${finalName}`;
+      } else {
+        const link = document.createElement('a'); link.className = 'download-link'; link.download = name;
+        link.href = URL.createObjectURL(blob); link.textContent = '点击保存文件'; item.appendChild(link); link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 60000);
+      }
+    }
+
+    async function uniqueName(directory, name) {
+      try { await directory.getFileHandle(name); } catch { return name; }
+      const dot = name.lastIndexOf('.'); const stem = dot > 0 ? name.slice(0, dot) : name; const ext = dot > 0 ? name.slice(dot) : '';
+      return `${stem}-${Date.now()}${ext}`;
+    }
+
+    function addProgress(listId, name, size) {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong></strong> <small></small><div class="progress"><span></span></div><div class="result"></div>`;
+      li.querySelector('strong').textContent = name; li.querySelector('small').textContent = formatSize(size);
+      document.getElementById(listId).prepend(li); return li;
+    }
+    function setProgress(item, value) { item.querySelector('.progress span').style.width = `${value}%`; }
+    function formatSize(size) { return size < 1024 ? `${size} B` : size < 1048576 ? `${(size/1024).toFixed(1)} KB` : size < 1073741824 ? `${(size/1048576).toFixed(1)} MB` : `${(size/1073741824).toFixed(2)} GB`; }
+    function friendlyError(error) { return error?.type === 'peer-unavailable' ? '二维码可能已过期，请重新生成' : (error?.message || '请检查网络后重试'); }
   </script>
 </body>
 </html>
