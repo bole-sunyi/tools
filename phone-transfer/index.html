@@ -26,7 +26,7 @@
   <nav class="site-nav"><div class="site-nav-inner"><a class="site-brand" href="../">Tools</a><a class="active" href="./">手机传文件</a></div></nav>
   <div class="page-wrap"><main>
     <h1>手机传文件</h1>
-    <p class="desc">电脑生成二维码，手机扫码选择文件，通过浏览器点对点传输。</p>
+    <p class="desc">电脑生成二维码，手机扫码选择文件，通过浏览器点对点传输，支持照片、视频、文档和其他格式。</p>
 
     <section id="desktop" class="panel center hidden">
       <h2>用手机扫描二维码</h2>
@@ -55,7 +55,8 @@
     const params = new URLSearchParams(location.search);
     const targetPeer = params.get('peer');
     const peerOptions = { host: '0.peerjs.com', port: 443, path: '/', secure: true };
-    const chunkSize = 256 * 1024;
+    // 16 KB chunks work reliably across mobile Safari, Chrome and Edge.
+    const chunkSize = 16 * 1024;
     let directoryHandle = null;
     const incoming = new Map();
 
@@ -125,9 +126,15 @@
         const data = await file.slice(index * chunkSize, Math.min(file.size, (index + 1) * chunkSize)).arrayBuffer();
         connection.send({ type: 'chunk', id, index, data: new Uint8Array(data) });
         setProgress(item, Math.round((index + 1) / total * 100));
-        if (index % 8 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+        if (index % 16 === 0) await waitForSendQueue(connection);
       }
       connection.send({ type: 'end', id });
+    }
+
+    async function waitForSendQueue(connection) {
+      const channel = connection.dataChannel || connection._dc;
+      if (!channel) return new Promise(resolve => setTimeout(resolve, 10));
+      while (channel.bufferedAmount > 1024 * 1024) await new Promise(resolve => setTimeout(resolve, 20));
     }
 
     async function receiveData(message) {
