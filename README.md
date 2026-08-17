@@ -31,6 +31,8 @@ npm run start:phone-transfer
 
 然后打开 `http://localhost:8787/desktop.html` 生成二维码。手机和电脑连接同一 Wi‑Fi 后扫码选择文件，文件会保存到电脑桌面。首次运行 Windows 防火墙提示时，请允许 Node.js 访问专用网络。
 
+macOS 用户可以直接双击仓库根目录的 `start-phone-transfer.command`；Windows 用户双击 `start-phone-transfer.bat`。启动器会根据系统自动打开浏览器和二维码页面。首次 macOS 双击后如果系统提示无法打开，请右键该文件并选择“打开”。
+
 ## 游戏时间转换说明
 
 以北京时间为输入基准：
