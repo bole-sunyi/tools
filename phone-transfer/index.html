@@ -91,18 +91,29 @@
       document.getElementById('phone').classList.remove('hidden');
       const status = document.getElementById('phoneStatus');
       const sendButton = document.getElementById('sendButton');
-      const connection = new Peer(undefined, peerOptions).connect(target, { reliable: true, serialization: 'binary' });
-      connection.on('open', () => { status.textContent = '已连接电脑，请选择文件'; sendButton.disabled = false; });
-      connection.on('close', () => { status.textContent = '连接已断开，请在电脑上重新生成二维码'; sendButton.disabled = true; });
-      connection.on('error', error => { status.textContent = `连接失败：${friendlyError(error)}`; sendButton.disabled = true; });
-      sendButton.onclick = async () => {
+      const phonePeer = new Peer(undefined, peerOptions);
+      let connection;
+      phonePeer.on('open', () => {
+        connection = phonePeer.connect(target, { reliable: true, serialization: 'binary' });
+        bindConnection(connection, status, sendButton);
+      });
+      phonePeer.on('error', error => { status.textContent = `连接失败：${friendlyError(error)}`; sendButton.disabled = true; });
+      async function sendSelected() {
         const files = [...document.getElementById('fileInput').files];
         if (!files.length) return status.textContent = '请先选择文件';
+        if (!connection || !connection.open) return status.textContent = '尚未连接到电脑，请等待连接成功';
         sendButton.disabled = true;
         for (const file of files) await sendFile(connection, file);
         status.textContent = `发送完成，共 ${files.length} 个文件`;
         sendButton.disabled = false;
-      };
+      }
+      sendButton.onclick = sendSelected;
+    }
+
+    function bindConnection(connection, status, sendButton) {
+      connection.on('open', () => { status.textContent = '已连接电脑，请选择文件'; sendButton.disabled = false; });
+      connection.on('close', () => { status.textContent = '连接已断开，请在电脑上重新生成二维码'; sendButton.disabled = true; });
+      connection.on('error', error => { status.textContent = `连接失败：${friendlyError(error)}`; sendButton.disabled = true; });
     }
 
     async function sendFile(connection, file) {
@@ -112,7 +123,7 @@
       connection.send({ type: 'meta', id, name: file.name, size: file.size, mime: file.type, total });
       for (let index = 0; index < total; index++) {
         const data = await file.slice(index * chunkSize, Math.min(file.size, (index + 1) * chunkSize)).arrayBuffer();
-        connection.send({ type: 'chunk', id, index, data });
+        connection.send({ type: 'chunk', id, index, data: new Uint8Array(data) });
         setProgress(item, Math.round((index + 1) / total * 100));
         if (index % 8 === 0) await new Promise(resolve => setTimeout(resolve, 0));
       }
