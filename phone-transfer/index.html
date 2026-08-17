@@ -43,7 +43,12 @@
     <section id="phone" class="panel hidden">
       <h2>选择要发送的文件</h2>
       <p id="phoneStatus" class="status">正在连接电脑…</p>
-      <input id="fileInput" class="file-input" type="file" multiple>
+      <label class="file-input">选择照片或视频
+        <input id="fileInput" type="file" accept="image/*,video/*" multiple>
+      </label>
+      <label class="file-input">选择其他文件（文档、压缩包等）
+        <input id="otherInput" type="file" multiple>
+      </label>
       <button id="sendButton" class="primary" disabled>发送到电脑</button>
       <ul id="sentFiles" class="file-list"></ul>
     </section>
@@ -58,6 +63,7 @@
     // 16 KB chunks work reliably across mobile Safari, Chrome and Edge.
     const chunkSize = 16 * 1024;
     let directoryHandle = null;
+    const selectedFiles = [];
     const incoming = new Map();
 
     if (targetPeer) startPhone(targetPeer); else startDesktop();
@@ -92,6 +98,8 @@
       document.getElementById('phone').classList.remove('hidden');
       const status = document.getElementById('phoneStatus');
       const sendButton = document.getElementById('sendButton');
+      document.getElementById('fileInput').onchange = event => addSelectedFiles(event.target.files);
+      document.getElementById('otherInput').onchange = event => addSelectedFiles(event.target.files);
       const phonePeer = new Peer(undefined, peerOptions);
       let connection;
       phonePeer.on('open', () => {
@@ -100,7 +108,7 @@
       });
       phonePeer.on('error', error => { status.textContent = `连接失败：${friendlyError(error)}`; sendButton.disabled = true; });
       async function sendSelected() {
-        const files = [...document.getElementById('fileInput').files];
+        const files = [...selectedFiles];
         if (!files.length) return status.textContent = '请先选择文件';
         if (!connection || !connection.open) return status.textContent = '尚未连接到电脑，请等待连接成功';
         sendButton.disabled = true;
@@ -109,6 +117,11 @@
         sendButton.disabled = false;
       }
       sendButton.onclick = sendSelected;
+    }
+
+    function addSelectedFiles(files) {
+      for (const file of files) if (!selectedFiles.some(item => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified)) selectedFiles.push(file);
+      document.getElementById('phoneStatus').textContent = `已选择 ${selectedFiles.length} 个文件，可继续添加或发送`;
     }
 
     function bindConnection(connection, status, sendButton) {
