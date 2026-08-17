@@ -18,6 +18,18 @@ https://bole-sunyi.github.io/tools/
 | 时间戳转换 | `/timestamp-converter/` |
 | 进制转换 | `/radix-converter/` |
 | 发布更新内容生成 | `/release-update-helper/` |
+| 手机传文件 | `/phone-transfer/`（需运行本地 Node.js 服务） |
+
+## 手机传文件
+
+该功能由 GitHub Pages 页面和电脑本地接收服务配合使用。电脑端在仓库根目录执行：
+
+```bash
+npm install
+npm run start:phone-transfer
+```
+
+然后打开 `http://localhost:8787/desktop.html` 生成二维码。手机和电脑连接同一 Wi‑Fi 后扫码选择文件，文件会保存到电脑桌面。首次运行 Windows 防火墙提示时，请允许 Node.js 访问专用网络。
 
 ## 游戏时间转换说明
 
