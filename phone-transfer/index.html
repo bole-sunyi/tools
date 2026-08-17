@@ -43,8 +43,11 @@
     <section id="phone" class="panel hidden">
       <h2>选择要发送的文件</h2>
       <p id="phoneStatus" class="status">正在连接电脑…</p>
-      <label class="file-input">选择照片或视频
-        <input id="fileInput" type="file" accept="image/*,video/*" multiple>
+      <label class="file-input">选择照片
+        <input id="fileInput" type="file" accept="image/*" multiple>
+      </label>
+      <label class="file-input">选择视频
+        <input id="videoInput" type="file" accept="video/*" multiple>
       </label>
       <label class="file-input">选择其他文件（文档、压缩包等）
         <input id="otherInput" type="file" multiple>
@@ -99,6 +102,7 @@
       const status = document.getElementById('phoneStatus');
       const sendButton = document.getElementById('sendButton');
       document.getElementById('fileInput').onchange = event => addSelectedFiles(event.target.files);
+      document.getElementById('videoInput').onchange = event => addSelectedFiles(event.target.files);
       document.getElementById('otherInput').onchange = event => addSelectedFiles(event.target.files);
       const phonePeer = new Peer(undefined, peerOptions);
       let connection;
