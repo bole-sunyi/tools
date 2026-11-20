@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>历史反馈风险提示 · Tools</title><link rel="stylesheet" href="../assets/common.css"><link rel="stylesheet" href="style.css"></head>
+<body><nav class="site-nav"><div class="site-nav-inner"><a class="site-brand" href="../">Tools</a><a class="active" href="./">历史反馈风险提示</a></div></nav>
+<div class="page-wrap"><main>
+<div class="eyebrow">EVIDENCE FIRST · 只读检索</div><h1>历史反馈风险提示</h1><p class="desc">上传活动截图或需求文件，模糊检索历史反馈。每条结果都有原文和出处，不生成无依据的问题。</p>
+<section class="panel"><h2>① 连接问题库</h2><p>唯一来源：<a href="https://alidocs.dingtalk.com/i/nodes/ZgpG2NdyVXrb196dfR2GBvBr8MwvDqPk" target="_blank" rel="noopener">测试BUG记录 ↗</a>。只读，不修改钉钉。问题库不内置在公开网页中。</p>
+<label class="upload">导入私有问题库 JSON（本机处理）<input id="library" type="file" accept=".json"></label>
+<details><summary>或从受保护的只读服务读取</summary><div class="connection"><label>服务地址（HTTPS）<input id="endpoint" type="url" placeholder="https://你的服务域名"></label><label>访问口令（只存当前内存）<input id="token" type="password" autocomplete="off"></label><button id="connect">读取问题库</button></div><p>仅向你填写的服务发送口令；不使用聊天中的钉钉权限。此服务读取已同步快照，不代表实时读取钉钉。</p></details>
+<p id="library-status" role="status">尚未加载问题库，不能查询。</p><p id="coverage" class="muted"></p><button id="clear" class="secondary">清除本页数据</button></section>
+<section class="panel"><h2>② 上传并确认需求内容</h2><label class="upload">选择截图或需求文件（可多选，每个 ≤ 20 MB）<input id="requirements" type="file" multiple accept=".png,.jpg,.jpeg,.webp,.pdf,.docx,.txt,.md"></label><p class="muted">支持 PNG / JPG / WEBP、PDF、DOCX、TXT、MD。截图在本机 OCR，不理解纯图形玩法；请核对识别文字并补充功能机制。扫描 PDF 请转截图上传。文件内容不发送给模型。</p><p class="muted">OCR / PDF / DOCX 解析组件及 OCR 字库按需从第三方 CDN 下载；不向 CDN 上传文件。加载失败会明确报错，不会自动编造识别内容。</p><p id="extract-status" role="status"></p><label for="query">活动内容 / 识别文字（可编辑）</label><textarea id="query" rows="9" maxlength="100000" placeholder="例如：网页商店购买礼包后领取奖励，断网重连后继续收奖……"></textarea>
+<div class="actions"><label>模糊匹配范围<select id="mode"><option value="standard">标准：关键词 + 别名 + 机制</option><option value="strict">收紧：更强文字依据</option><option value="broad">扩大：更多相似候选</option></select></label><button id="search" disabled>检索历史问题</button><button id="export" class="secondary" disabled>导出带出处的结果</button></div><p class="muted">规则型模糊检索，不是大模型语义理解。排序分不是概率或风险等级。长需求可能检索出不同模块的问题，请人工确认。</p></section>
+<section><h2>③ 有据可查的重点关注</h2><p id="result-status" role="status">等待检索。历史记录不等于当前活动存在同一 Bug；已解决的问题也会保留用于回归参考。</p><div id="results"></div><button id="more" hidden>显示更多结果</button></section>
+</main></div><script type="module" src="app.mjs"></script></body></html>

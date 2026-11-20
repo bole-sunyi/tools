@@ -13,6 +13,7 @@ https://bole-sunyi.github.io/tools/
 | 工具 | 路径 |
 | --- | --- |
 | 工具首页 | `/` |
+| 历史反馈风险提示 | `/risk-alert/` |
 | Ultimate Survivor 活动计算器 | `/ultimate-survivor/` |
 | Mod 取模计算器 | `/mod-calculator/` |
 | 游戏时间转换 | `/game-time-converter/` |
@@ -36,3 +37,7 @@ https://bole-sunyi.github.io/tools/
   - 冬令时（EST）：比北京时间慢 13 小时（例：北京 24 日 12:00 → 23 日 23:00）
 
 CF 与 MT 项目使用相同的时间换算规则。
+
+## 历史反馈风险提示
+
+按关键词、功能别名和机制模糊检索指定反馈表。公开页面不包含问题原文；需导入可信的私有 JSON 快照，或连接授权只读服务。支持截图 OCR、DOCX、文本 PDF、TXT 和 MD。每条结果引用工作表与行号，不生成无依据风险。不自动同步或修改钉钉；服务配置与限制见 [部署说明](risk-service/README.md)。

@@ -1,2 +1,8 @@
 node_modules/
 .DS_Store
+
+# Private risk library and service secrets
+*.private.json
+.env
+.env.*
+risk-private/

@@ -1,0 +1,32 @@
+# 历史反馈风险提示：部署边界
+
+前端路径 `/risk-alert/`。问题库不在仓库中，未授权用户只看到空页面，无法检索原文。
+
+## 可立即使用：本机问题库
+
+页面导入由指定钉钉表只读生成的 `反馈问题库.json`。数据仅存在当前页内存，不写 localStorage，不上传文件，不调用生成式模型。刷新后需重新导入。来源字段校验仅防误导入，**不构成密码学真实性证明**，请只使用可信维护者生成的快照。
+
+支持需求 TXT/MD/DOCX/文本 PDF 和图片 OCR；截图纯图形机制需人工补充，扫描 PDF 需转图片。解析组件与 OCR 字库按需从 CDN 下载。源文件内容不发给 CDN 或模型。组件加载失败时显示错误，不伪造内容。
+
+## 私有服务（需要用户提供部署环境）
+
+Node.js >=20：
+
+```sh
+export RISK_LIBRARY='/absolute/private/path/反馈问题库.json'
+export RISK_TOKEN='replace-with-at-least-24-random-characters'
+export RISK_ORIGIN='https://bole-sunyi.github.io'
+node risk-service/server.mjs
+```
+
+服务默认绑定 127.0.0.1:8787，不直接暴露公网。上线需要 HTTPS 反向代理、访问控制/限流和维护者管理。不要把快照、口令、钉钉凭据写入仓库。前端服务地址仅填域名/基础路径，不含 `/library`。口令只在当前页面内存保留并在请求后清除。
+
+**当前服务只读取私有 JSON 快照，不会自动读取钉钉。** 自动同步需要另行提供钉钉只读服务账号/授权和安全运行环境，不能复用 Codex 对话中的 MCP 登录态。未配置时界面必须保持快照标识。不得声称实时数据。
+
+快照字段：`schemaVersion=1, sourceUrl, fetchedAt, sourceUpdatedAt, coverage, records`。记录：`id,sheet,sheetId,row,date,issue,status,notes`。仅收录 B 列非空的问题原文、I 列备注及日期/状态/来源位置，不包含负责人列。三个工作表：系统（2026）、主题、系统。浮动图片和附件未纳入。合并单元格的子行不重复计数。
+
+## 模糊匹配
+
+中文二字片段 + 英文/ID，逆文档频率降权；人工维护的功能别名/机制词表；较长英文允许一个字符的拼写偏差。阈值可收紧/扩大。每条显示真正命中的原文词、别名对应和来源行。不是大模型语义理解，没有风险等级或概率保证。相似反馈不等于当前 Bug；原状态照录，包括已解决。关注项直接引用原表备注，不补写未知原因。
+
+运行验证：`node --test risk-alert/search.test.mjs`。真实库验证脚本需传私有文件路径。不得将真实库作为公开测试 fixture。
