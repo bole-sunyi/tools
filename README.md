@@ -13,6 +13,7 @@ https://bole-sunyi.github.io/tools/
 | 工具 | 路径 |
 | --- | --- |
 | 工具首页 | `/` |
+| Ultimate Survivor 活动计算器 | `/ultimate-survivor/` |
 | Mod 取模计算器 | `/mod-calculator/` |
 | 游戏时间转换 | `/game-time-converter/` |
 | 时间戳转换 | `/timestamp-converter/` |

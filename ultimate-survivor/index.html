@@ -1,0 +1,101 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ultimate Survivor 活动计算器 - Tools</title><link rel="stylesheet" href="../assets/common.css"><style>
+:root{--font-size-base:14px;--foreground:#1f2937;--border:#e5e7eb}
+main{width:min(1200px,100%)}
+.site-nav-inner{max-width:1200px}
+h2{margin:0;font-size:24px}h3{margin:14px 0 0;font-size:18px}
+.form-label{font-size:14px}input,select{margin-top:8px}
+.btn{background:#eff6ff;color:#1d4ed8;line-height:1.5}
+.btn:hover{background:#dbeafe}.btn:focus-visible,summary:focus-visible{outline:3px solid #60a5fa;outline-offset:3px}
+.table-responsive{overflow-x:auto;width:100%;min-width:0}
+.table{border-collapse:collapse;width:100%;font-size:14px}
+.table th,.table td{padding:12px 10px;text-align:right;border-bottom:1px solid #e5e7eb;white-space:nowrap;font-weight:400}
+.table th{font-weight:600;background:#f8fafc}.table th:first-child,.table td:first-child{text-align:left}
+.text-destructive{color:#b91c1c}.tabular-nums{font-variant-numeric:tabular-nums;line-height:1.8}
+details{margin-top:8px}summary{cursor:pointer;font-weight:600}#revive{line-height:1.8;padding-top:10px}
+[hidden]{display:none!important}.method{margin-top:24px;color:#4b5563;font-size:14px;line-height:1.8}
+.method li{margin:6px 0}.desc{margin-bottom:20px}
+@media(max-width:640px){body{padding-left:12px;padding-right:12px}.site-nav{margin-left:-12px;margin-right:-12px;padding:0 12px}main{padding:22px 14px}}
+</style></head><body><nav class="site-nav"><div class="site-nav-inner"><a class="site-brand" href="../">Tools</a><a href="../">返回工具集</a><a class="active" href="./">Ultimate Survivor</a></div></nav><div class="page-wrap"><main><p class="desc">输入账号参数，计算各轮任务进度要求、瓜分奖池及人均奖励。</p><div id="survivor-calc">
+<style>
+#survivor-calc{display:grid;gap:calc(var(--font-size-base)*1)}
+#survivor-calc .inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:calc(var(--font-size-base)*.75)}
+#survivor-calc .inputs label{min-width:0}
+#survivor-calc td{font-variant-numeric:tabular-nums}
+#survivor-calc summary{color:var(--foreground)}
+@media(max-width:400px){#survivor-calc .inputs{grid-template-columns:1fr}}
+</style>
+<h2>Ultimate Survivor 计算器</h2>
+<div class="inputs">
+<label class="form-label">账号 rlv<select id="rlv" class="form-select"><option value="0">rlv0</option><option value="1">rlv1</option><option value="2">rlv2</option><option value="3">rlv3</option></select></label>
+<label class="form-label">查看 / 编辑轮次<select id="round" class="form-select"><option value="0">第1轮 · 阶段1</option><option value="1">第2轮 · 阶段2</option><option value="2">第3轮 · 阶段3</option><option value="3">第4轮 · 阶段3</option><option value="4">第5轮 · 阶段3</option></select></label>
+<label class="form-label">本轮 avg_bet（AB1）<input id="ab1" class="form-control" type="number" min="0" step="any" value="0"></label>
+<label class="form-label">本轮 avg_bet3（AB3，与美元上限同单位）<input id="ab3" class="form-control" type="number" min="0" step="any" value="1"></label>
+<label class="form-label">本轮 EB<input id="eb" class="form-control" type="number" min="0" step="any" value="0"></label>
+<label class="form-label">本轮 AC（正数）<input id="ac" class="form-control" type="number" min="0" step="any" value="1"></label>
+<label class="form-label">本轮实际瓜分人数（留空用基准）<input id="people" class="form-control" type="number" min="1" step="1" placeholder="基准人数"></label>
+</div>
+<div class="viz-row"><button id="apply" type="button" class="btn">将本轮 avg_bet / avg_bet3 / EB / AC 应用到全部5轮</button></div>
+<div id="error" class="text-destructive" role="alert" hidden></div>
+<div id="result" aria-live="polite">
+<div id="ratios" class="tabular-nums"></div>
+<h3>本轮任务进度要求</h3>
+<div class="table-responsive"><table class="table table-sm"><thead><tr><th>任务</th><th>Spin</th><th>封顶后系数</th><th>基础Bet<br>未乘AC</th><th>任务总Bet</th><th>轮内累计Bet</th><th>人数基准 ± 浮动</th></tr></thead><tbody id="tasks"></tbody></table></div>
+<h3>5轮进度与奖励</h3>
+<div class="table-responsive"><table class="table table-sm"><thead><tr><th>轮次</th><th>avg_bet / avg_bet3 / EB</th><th>AC</th><th>本轮总Bet</th><th>累计Bet</th><th>基准单人奖</th><th>总奖池</th><th>实际人均奖</th></tr></thead><tbody id="rounds"></tbody></table></div>
+<div id="total" class="tabular-nums"></div>
+<div id="range" class="tabular-nums"></div>
+</div>
+<details><summary>复活配置 · 第二货币</summary><div id="revive"></div></details>
+</div>
+<script>
+(()=>{
+const root=document.getElementById('survivor-calc'),$=id=>root.querySelector('#'+id);
+const spins=[[5,15,30],[30,35,40,45,50],[30,30,35,35,40,45,50],[30,30,35,35,40,45,50],[30,30,35,35,40,45,50]];
+const factors=[[.5,.5,.5],[.52,.59,.66,.73,.8],[.65,.7,.75,.8,.85,.9,.95],[1,1.05,1.1,1.15,1.2,1.25,1.3],[1.35,1.42,1.49,1.56,1.63,1.71,1.8]];
+const counts=[[85,60,10],[85,60,40,15,8],[80,60,40,25,15,9,5],[80,60,40,25,15,9,5],[80,60,40,25,15,9,5]];
+const floats=[[10,10,4],[10,5,5,3,2],[10,5,5,5,3,2,1],[10,5,5,5,3,2,1],[10,5,5,5,3,2,1]];
+const caps=[4,1,.2,.1],basePeople=[10,8,5,5,5],peopleFloat=[4,2,1,1,1],costs=[[300,400,500,750,1000],[200,300,400,500,700],[100,200,300,400,500],[50,100,150,200,250]];
+let selected=0,rlv=0,settings=Array.from({length:5},()=>({ab1:0,ab3:1,eb:0,ac:1,people:''}));
+const fmt=n=>n.toLocaleString('zh-CN',{maximumFractionDigits:8});
+function tier(v,limits,values){let i=0;for(let j=1;j<limits.length;j++)if(v>=limits[j])i=j;return values[i]}
+function calculate(i,p){
+ const a=i===0?0:tier(p.ab1/p.ab3,[0,2,5,10],[0,.05,.1,.15]);
+ const e=i===0?0:tier(p.eb/p.ab3,[0,1000,10000,50000],[0,.03,.05,.1]);
+ let cumulative=0,reward=0;
+ const tasks=spins[i].map((spin,j)=>{const coefficient=Math.min(2,factors[i][j]+a+e);let bet=p.ab3*coefficient;if(i===0&&j===0)bet=Math.min(bet,caps[rlv]);const target=spin*bet*p.ac;cumulative+=target;reward+=target*(j===spins[i].length-1?.045:.005);return {spin,coefficient,bet,target,cumulative}});
+ const pool=reward*basePeople[i];return {a,e,tasks,total:cumulative,reward,pool,actual:pool/(p.people===''?basePeople[i]:p.people)};
+}
+function valid(p,i){if(!Number.isFinite(p.ab1)||p.ab1<0||!Number.isFinite(p.eb)||p.eb<0||!Number.isFinite(p.ab3)||p.ab3<=0||!Number.isFinite(p.ac)||p.ac<=0)return `第${i+1}轮：avg_bet（AB1）、EB须为非负数；avg_bet3（AB3）、AC须大于0。`;if(p.people!==''&&(!Number.isInteger(p.people)||p.people<basePeople[i]-peopleFloat[i]||p.people>basePeople[i]+peopleFloat[i]))return `第${i+1}轮实际人数须为${basePeople[i]-peopleFloat[i]}～${basePeople[i]+peopleFloat[i]}之间的整数。`;return ''}
+function read(){for(const k of ['ab1','ab3','eb','ac','people']){let v=String($(k).value);settings[selected][k]=v.trim()===''?(k==='people'?'':NaN):Number(v)}}
+function load(){for(const k of ['ab1','ab3','eb','ac','people'])$(k).value=settings[selected][k];$('people').placeholder=`基准 ${basePeople[selected]}；范围 ${basePeople[selected]-peopleFloat[selected]}～${basePeople[selected]+peopleFloat[selected]}`}
+function saveLocal(state){try{localStorage.setItem("survivor-inputs-v1",JSON.stringify(state))}catch{}}
+function save(){saveLocal({modelContent:{rlv,selectedRound:selected+1,roundInputs:settings}})}
+function draw(){
+ const err=settings.map(valid).find(Boolean);$('error').hidden=!err;$('error').textContent=err||'';$('result').hidden=!!err;if(err)return;
+ const data=settings.map((p,i)=>calculate(i,p));if(data.some(d=>!Number.isFinite(d.total)||!Number.isFinite(d.pool))){$('error').hidden=false;$('error').textContent='输入数值过大，计算超出范围。';$('result').hidden=true;return}
+ const d=data[selected],p=settings[selected];
+ $('ratios').textContent=`avg_bet / avg_bet3 ${fmt(p.ab1/p.ab3)} · EB / avg_bet3 ${fmt(p.eb/p.ab3)} · avg_bet（AB1）加成 ${fmt(d.a)} · EB加成 ${fmt(d.e)}${selected===0?'（首轮固定为0）':''}`;
+ $('tasks').innerHTML=d.tasks.map((t,j)=>`<tr><td>${j+1}${j===d.tasks.length-1?'（末）':''}</td><td>${t.spin}</td><td>${fmt(t.coefficient)}</td><td>${fmt(t.bet)}</td><td>${fmt(t.target)}</td><td>${fmt(t.cumulative)}</td><td>${counts[selected][j]} ± ${floats[selected][j]}</td></tr>`).join('');
+ let cum=0,totalReward=0; $('rounds').innerHTML=data.map((x,i)=>{cum+=x.total;totalReward+=x.actual;let s=settings[i];return `<tr><td>${i+1}${i===selected?' ←':''}</td><td>${fmt(s.ab1)} / ${fmt(s.ab3)} / ${fmt(s.eb)}</td><td>${fmt(s.ac)}</td><td>${fmt(x.total)}</td><td>${fmt(cum)}</td><td>${fmt(x.reward)}</td><td>${fmt(x.pool)}</td><td>${fmt(x.actual)}（${s.people===''?basePeople[i]:s.people}人）</td></tr>`}).join('');
+ $('total').textContent=`全程 ${spins.flat().reduce((a,b)=>a+b,0)} Spin · 总进度要求 ${fmt(cum)} Bet · 按所填人数全部通关累计奖 ${fmt(totalReward)}`;
+ $('range').textContent=`第${selected+1}轮：瓜分人数 ${basePeople[selected]} ± ${peopleFloat[selected]}；未取整人均奖范围 ${fmt(d.pool/(basePeople[selected]+peopleFloat[selected]))}～${fmt(d.pool/(basePeople[selected]-peopleFloat[selected]))}`;
+ $('revive').textContent=`rlv${rlv} · 本关第1 / 2 / 3 / 4 / ≥5次费用：${costs[rlv].join(' / ')}；每次增加20 Spin，使用次数每关刷新。`;
+}
+function restore(state){const m=state?.modelContent;if(m&&Number.isInteger(m.rlv)&&m.rlv>=0&&m.rlv<=3&&Array.isArray(m.roundInputs)&&m.roundInputs.length===5&&m.roundInputs.every(p=>p&&['ab1','ab3','eb','ac','people'].every(k=>Object.hasOwn(p,k)))){rlv=m.rlv;settings=m.roundInputs.map(p=>({...p}));selected=Number.isInteger(m.selectedRound)&&m.selectedRound>=1&&m.selectedRound<=5?m.selectedRound-1:0}$('rlv').value=rlv;$('round').value=selected;load();draw()}
+ $('round').addEventListener('change',()=>{selected=Number($('round').value);load();draw();save()});
+ $('rlv').addEventListener('change',()=>{rlv=Number($('rlv').value);draw();save()});
+ for(const k of ['ab1','ab3','eb','ac','people'])$(k).addEventListener('input',()=>{read();draw();if(!settings.map(valid).find(Boolean))save()});
+ $('apply').addEventListener('click',()=>{read();if(valid(settings[selected],selected)){draw();return}const p=settings[selected];settings=settings.map(s=>({...s,ab1:p.ab1,ab3:p.ab3,eb:p.eb,ac:p.ac}));draw();save()});
+ try { restore(JSON.parse(localStorage.getItem("survivor-inputs-v1"))); } catch { restore(null); }
+})();
+</script>
+<section class="method"><h3>计算口径与注意事项</h3><ul>
+<li>配置依据：用户提供的【24039】Ultimate Survivor 数值配置截图（2026-11-20）。默认 avg_bet=0、avg_bet3=1、EB=0、AC=1，仅为示例。每轮参数单独保存，所有任务与奖励使用该轮快照；未来轮次不会自动预测账号参数变化。</li>
+<li>avg_bet 对应 AB1，avg_bet3 对应 AB3。两者及 EB 必须使用同一金额单位；阶段1任务1的上限是美元，因此输入前须换算为美元等值。结果是同单位金额，不自动换算游戏金币。</li>
+<li>首轮两项加成均为0。后续按 avg_bet / avg_bet3 的下界 0、2、5、10 取加成 0、0.05、0.10、0.15；EB / avg_bet3 的下界 0、1000、10000、50000 取加成 0、0.03、0.05、0.10。分档是取对应档位，不逐档累加。</li>
+<li>基础Bet = avg_bet3 × min(2, 任务基础系数 + 两项加成)。仅第1轮任务1再取 rlv0 / 1 / 2 / 3 上限 4 / 1 / 0.2 / 0.1。任务总Bet = Spin × 基础Bet × 本轮AC。轮内累计Bet是进度要求，不代表账号已完成进度。</li>
+<li>基准单人奖 = 普通任务总Bet之和 × 0.5% + 末任务总Bet × 4.5%；总奖池 = 基准单人奖 × 末任务人数基准；实际人均奖 = 总奖池 ÷ 实际瓜分人数。人数留空时按基准计算，范围并非实际抽样结果。</li>
+<li>截图未给出金额取整、随机方向及玩家计入细则：内部保留浮点精度，显示最多8位小数，不模拟随机抽样；实际客户端结果以游戏实现为准。累计奖励假定每轮均通关领取。</li>
+<li>末任务每次Spin：当前Bet &gt;（末任务总Bet ÷ 末任务Spin）× 0.5 时，调整后RTP = max(0.75, 当前RTP − 0.04)；等于门槛不扣减。此规则不改变本页任务目标与奖池计算。</li>
+<li>参数仅保存在当前浏览器本地，不上传服务器。第5轮完成并领取终奖后活动结束。</li>
+</ul></section></main></div></body></html>
