@@ -40,16 +40,22 @@ export function createIndex(records){
 export function search(index,query,mode='standard'){
  const q=norm(query);if(q.length<2||stop.has(q)||(/^[a-z]+$/.test(q)&&q.length<3))return [];
  const qt=tokens(q);const qg=groups.map(g=>({g,hits:g.filter(t=>has(q,t))})).filter(x=>x.hits.length);
+ // When a named feature is present, standard mode stays on that feature.
+ // Broad mode also exposes cross-feature mechanism candidates.
+ const featureNames = new Set(['网店','coupon','pass','byd','签到']);
+ const featureGroups = qg.filter(x=>featureNames.has(x.g[0]));
  const allEnglish=[...qt].filter(t=>/^[a-z]{5,}$/.test(t));
  let results=[];
  for(const d of index.docs){
+  const featureMatches = featureGroups.filter(x=>x.g.some(t=>has(d.text,t))).length;
+  if(mode!=='broad'&&featureGroups.length&&!featureMatches)continue;
   let lexical=0;const matches=[];const aliases=[];const typos=[];
   for(const t of qt){if(d.tokens.has(t)){let weight=Math.log(1+index.N/(1+(index.df.get(t)||0)));if(/^\d/.test(t))weight*=1.5;lexical+=weight;matches.push(t);}}
   for(const {g,hits} of qg){const found=g.filter(t=>has(d.text,t));if(found.length)aliases.push({input:hits[0],source:found[0]});}
   if(mode!=='strict')for(const t of allEnglish){if(d.tokens.has(t))continue;const found=[...d.tokens].find(x=>/^[a-z]+$/.test(x)&&oneEdit(t,x));if(found)typos.push({input:t,source:found});}
   const distinctive=aliases.some(a=>groups.filter(g=>['网店','coupon','pass','byd','小游戏','礼包','签到'].includes(g[0])).some(g=>g.includes(a.input)));
   const exact=q.length<=60&&has(d.text,q);
-  const score=lexical+aliases.length*3+typos.length*2+(exact?8:0);
+  const score=lexical+aliases.length*3+typos.length*2+(exact?8:0)+featureMatches*15;
   // Short/common overlaps cannot silently become a confident functional match.
   const pass=exact||(mode==='strict'?(matches.length>=2&&lexical>=7):(mode==='broad'?(lexical>=4.5||aliases.length>=1||typos.length>=1):(lexical>=7&&matches.length>=2||aliases.length>=2||distinctive||aliases.length>=1&&lexical>=3||typos.length>=1&&matches.some(t=>/^[a-z]{4,}$/.test(t)))));
   if(pass)results.push({record:d.r,score:Math.round(score*10)/10,matches,aliases,typos,label:exact?'原文直接命中':aliases.some(a=>a.input!==a.source)?'别名 / 机制相似，需确认':typos.length?'拼写近似，需确认':'文字相似，需确认'});

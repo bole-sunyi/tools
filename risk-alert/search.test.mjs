@@ -8,6 +8,12 @@ const records=[
  {id:'c',sheet:'系统',row:4,issue:'mansion upgrade',notes:'测试数据',status:'已解决'}
 ];
 const index=createIndex(records);
+test('named feature outranks and filters unrelated mechanism-only records',()=>{
+ const docs=createIndex([...records,{id:'d',issue:'购买礼包断线后领取奖励核查数量',notes:'收奖后重新登录核查奖励'}]);
+ const standard=search(docs,'网页商店优惠券购买礼包断线后领取奖励核查数量');
+ assert.equal(standard[0].record.id,'a');assert.ok(!standard.some(r=>r.record.id==='d'));
+ assert.ok(search(docs,'网页商店优惠券购买礼包断线后领取奖励核查数量','broad').some(r=>r.record.id==='d'));
+});
 test('exact quote has source identity',()=>{const r=search(index,'竖版布局遮挡');assert.equal(r[0].record,records[1]);assert.equal(r[0].label,'原文直接命中');});
 test('fuzzy alias and mechanism',()=>{const r=search(index,'网页商店优惠券掉线重连');assert.equal(r[0].record.id,'a');assert.ok(r[0].aliases.some(a=>a.input==='网页商店'&&a.source==='webstore'));});
 test('english typo with corroborating context',()=>assert.equal(search(index,'mansoin upgrade')[0].record.id,'c'));
