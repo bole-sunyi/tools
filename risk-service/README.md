@@ -8,20 +8,27 @@
 
 支持需求 XLSX/XLS/CSV、TXT/MD/DOCX/文本 PDF 和图片 OCR；Excel 依工作表与原始行号提取，多行单元格保留换行，内嵌图片不解析。截图按照行坐标整理段落，可切回原始换行；截图纯图形机制需人工补充，扫描 PDF 需转图片。解析组件与 OCR 字库按需从 CDN 下载。源文件内容不发给 CDN 或模型。组件加载失败时显示错误，不伪造内容。
 
-## 私有服务（需要用户提供部署环境）
+## 本机 MCP 自动读取（推荐）
 
-Node.js >=20：
+双击本目录 `启动风险提示工具.command`。程序使用本机 Node.js 和支持 tomllib 的 Python 3.11+，读取 `~/.codex/config.toml` 中已有的 `dingtalk-sheets`、`dingtalk-docs` 配置，不修改配置文件。
+
+服务仅监听 `127.0.0.1:18787`。打开公网工具页时会自动尝试连接；也可以使用启动程序打开的 `http://127.0.0.1:18787/app/` 本机入口。浏览器若拦截公网网页连接本机，使用本机入口即可。使用期间保持服务窗口运行，Ctrl+C 停止。电脑关机、休眠或服务关闭时不能自动读取。
+
+流程：网页 → 本机服务 → 现有钉钉 MCP → 固定的「测试BUG记录」。读取 A:I，识别 B 列问题、I 列备注，保留原始行号与合并单元格。仅调用文档信息、工作表信息、范围读取工具，未暴露任意 MCP 调用接口。
+
+问题库只放在服务内存中，最多缓存 60 秒；新上传的需求会重新检查连接，`刷新问题库` 可强制读取。失败时不返回过期数据。MCP 授权信息只从本机配置读入服务内存，不返回浏览器，不写入仓库。服务仅允许工具站来源与本机入口，数据接口必须携带自定义读取请求头；拒绝其他来源、未知 Host 与写入请求。网页只有文件解析和检索功能，需求文件不会上传给 MCP。
+
+终端运行：
 
 ```sh
-export RISK_LIBRARY='/absolute/private/path/反馈问题库.json'
-export RISK_TOKEN='replace-with-at-least-24-random-characters'
-export RISK_ORIGIN='https://bole-sunyi.github.io'
-node risk-service/server.mjs
+node risk-service/local-bridge.mjs
 ```
 
-服务默认绑定 127.0.0.1:8787，不直接暴露公网。上线需要 HTTPS 反向代理、访问控制/限流和维护者管理。不要把快照、口令、钉钉凭据写入仓库。前端服务地址仅填域名/基础路径，不含 `/library`。口令只在当前页面内存保留并在请求后清除。
+本地源码变更后重启此进程。MCP 配置更新后，重启可以立即应用。
 
-**当前服务只读取私有 JSON 快照，不会自动读取钉钉。** 自动同步需要另行提供钉钉只读服务账号/授权和安全运行环境，不能复用 Codex 对话中的 MCP 登录态。未配置时界面必须保持快照标识。不得声称实时数据。
+## 可选：独立快照服务
+
+原 `server.mjs` 仍可用于授权的私有快照部署，需要 RISK_LIBRARY / RISK_TOKEN / RISK_ORIGIN。它只读取 JSON 文件，与本机 MCP 自动读取服务独立。
 
 快照字段：`schemaVersion=1, sourceUrl, fetchedAt, sourceUpdatedAt, coverage, records`。记录：`id,sheet,sheetId,row,date,issue,status,notes`。仅收录 B 列非空的问题原文、I 列备注及日期/状态/来源位置，不包含负责人列。三个工作表：系统（2026）、主题、系统。浮动图片和附件未纳入。合并单元格的子行不重复计数。
 
@@ -31,4 +38,4 @@ node risk-service/server.mjs
 
 主流程：上传后自动解析，问题库就绪时自动匹配；多个文件分别核对、合并检索。历史问题页展示 BUG 说明，重点关注页引用对应备注；详细来源和匹配依据可展开。标准模式在出现已知功能名时优先限定相关功能，扩大模式允许跨功能机制候选。
 
-运行验证：`node --test risk-alert/search.test.mjs risk-alert/extract.test.mjs`。真实库验证脚本需传私有文件路径。不得将真实库作为公开测试 fixture。
+运行验证：`node --test risk-alert/search.test.mjs risk-alert/extract.test.mjs risk-service/live-library.test.mjs`。真实库验证脚本需传私有文件路径。不得将真实库作为公开测试 fixture。

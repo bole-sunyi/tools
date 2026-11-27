@@ -1,14 +1,17 @@
 import {SOURCE, validateLibrary, createIndex, search} from './search.mjs?v=2';
 import {extract, stopOcr} from './extract.mjs?v=2';
+import {localHealth, readLocalLibrary} from './local-reader.mjs?v=3';
 
 const $ = id => document.getElementById(id);
 let library = null, index = null, documents = [], selected = 0;
 let results = [], shown = 0, view = 'history', report = '', parsing = false, generation = 0, libraryVersion = 0;
+let libraryConnection = 'import', localPending = null;
 const el = (tag, text, cls) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (cls) node.className = cls; return node; };
 function status(id, message, error = false) { $(id).textContent = message; $(id).classList.toggle('error', error); }
 function settings(open) { $('settings').hidden = !open; $('settings-toggle').setAttribute('aria-expanded', String(open)); }
 $('settings-toggle').onclick = () => settings($('settings').hidden);
-$('library-open').onclick = () => { settings(true); $('settings').scrollIntoView({behavior: 'smooth', block: 'start'}); };
+$('library-open').onclick = () => connectLocal(false);
+$('refresh-library').onclick = () => connectLocal(true);
 $('settings-close').onclick = () => settings(false);
 function step(current) { ['upload', 'review', 'results'].forEach((name, i) => { $('step-' + name).className = i === current ? 'active' : i < current ? 'done' : ''; }); }
 function saveEditor() { if (documents[selected]) documents[selected].text = $('query').value; }
@@ -41,21 +44,46 @@ $('query').oninput = () => { saveEditor(); count(); invalidate(); };
 $('mode').onchange = () => { if (index && documents.length && !parsing) match(); };
 $('ocr-layout').onchange = e => { const d = documents[selected]; if (!d || d.kind !== 'image') return; d.layout = e.target.value; d.text = d.layout === 'original' ? d.original : d.formatted; showDocument(selected); invalidate(); };
 
-function loadLibrary(data) {
+function loadLibrary(data, connection = 'import') {
   const validated = validateLibrary(data);
-  library = validated; index = createIndex(library.records);
+  library = validated; index = createIndex(library.records); libraryConnection = connection;
   $('library-dot').classList.add('ready');
-  status('library-status', `测试BUG记录 · ${library.records.length} 条历史问题 · 快照 ${new Date(library.fetchedAt).toLocaleDateString('zh-CN')}`);
-  $('library-open').textContent = '更换问题库';
-  $('coverage').textContent = `${library.coverage || '覆盖范围未声明'}。读取时间：${new Date(library.fetchedAt).toLocaleString('zh-CN')}；当前使用快照，尚未配置钉钉自动同步。`;
+  const local = connection === 'local';
+  status('library-status', local ? `本机钉钉已连接 · ${library.records.length} 条问题 · ${new Date(library.fetchedAt).toLocaleTimeString('zh-CN')} 读取` : `测试BUG记录 · ${library.records.length} 条历史问题 · 快照 ${new Date(library.fetchedAt).toLocaleDateString('zh-CN')}`);
+  $('library-open').textContent = '重新连接'; $('refresh-library').hidden = !local; $('local-fallback').hidden = local;
+  $('coverage').textContent = `${library.coverage || '覆盖范围未声明'}。读取时间：${new Date(library.fetchedAt).toLocaleString('zh-CN')}。` + (local ? '通过本机 MCP 读取，最多缓存 1 分钟；刷新问题库可立即重新读取。' : '当前是手动导入的快照。');
   settings(false); invalidate();
   if (documents.length && !parsing) match();
 }
 function unsetLibrary() {
   library = index = null; invalidate();
-  $('library-dot').classList.remove('ready'); $('library-open').textContent = '加载问题库';
-  status('library-status', '问题库待加载 · 可以先上传需求文件');
-  $('coverage').textContent = '当前网站使用问题库快照，尚未配置钉钉自动同步。';
+  $('library-dot').classList.remove('ready'); $('library-open').textContent = '连接本机'; $('refresh-library').hidden = true;
+  status('library-status', '本机问题库待连接 · 可以先上传需求文件');
+  $('coverage').textContent = '启动本机服务后，会自动通过现有钉钉 MCP 读取汇总表。';
+}
+async function connectLocal(force = false, quiet = false) {
+  if (localPending) return localPending;
+  const version = ++libraryVersion;
+  if (libraryConnection === 'local') unsetLibrary();
+  $('library-open').disabled = true; $('refresh-library').disabled = true;
+  localPending = (async () => {
+    try {
+      if (!quiet || !library) status('library-status', '正在连接本机钉钉读取服务…');
+      await localHealth();
+      if (version !== libraryVersion) return;
+      status('library-status', '已连接本机，正在读取钉钉汇总表…');
+      const data = await readLocalLibrary(force);
+      if (version === libraryVersion) loadLibrary(data, 'local');
+    } catch (error) {
+      if (version === libraryVersion) {
+        status('library-status', library ? '本机连接失败，当前使用已导入的问题库快照。' : error.message, true);
+        $('local-fallback').hidden = false;
+      }
+    } finally {
+      localPending = null; $('library-open').disabled = false; $('refresh-library').disabled = false;
+    }
+  })();
+  return localPending;
 }
 $('library').onchange = async e => {
   const version = ++libraryVersion, file = e.target.files[0]; if (!file) return;
@@ -90,7 +118,7 @@ function fileRow(name, state, failed = false) {
 async function upload(files) {
   if (parsing || !files.length) return;
   if (files.length > 12) { status('extract-status', '每次最多 12 个文件，请分批上传。', true); return; }
-  const run = ++generation;
+  const run = ++generation, useLocal = libraryConnection === 'local' || !index;
   parsing = true; documents = []; selected = 0; invalidate(); refreshDocuments();
   $('file-list').replaceChildren(); $('requirements').disabled = true; $('search').disabled = true;
   let total = 0, failures = 0;
@@ -115,7 +143,8 @@ async function upload(files) {
   parsing = false; $('requirements').disabled = false; $('requirements').value = ''; $('search').disabled = false;
   refreshDocuments(); step(documents.length ? 1 : 0);
   status('extract-status', `已解析 ${documents.length} 个文件${failures ? `，${failures} 个失败（未参与匹配）` : ''}。` + (documents.length && !index ? '加载问题库后会自动匹配。' : ''), !!failures);
-  if (documents.length && index) match();
+  if (documents.length && useLocal) await connectLocal(false, true);
+  else if (documents.length && index) match();
 }
 $('requirements').onchange = e => upload([...e.target.files]);
 for (const type of ['dragover', 'dragleave', 'drop']) $('dropzone').addEventListener(type, event => {
@@ -180,7 +209,7 @@ function match() {
   results = search(index, text, $('mode').value);
   $('result-panel').hidden = false; step(2);
   $('history-count').textContent = results.length; $('focus-count').textContent = results.filter(r => r.record.notes.trim()).length;
-  status('result-status', `基于 ${documents.length} 个文件的解析内容 · 命中 ${results.length} 条历史记录 · 依据问题库快照 ${new Date(library.fetchedAt).toLocaleDateString('zh-CN')}`);
+  status('result-status', `基于 ${documents.length} 个文件的解析内容 · 命中 ${results.length} 条历史记录 · ${libraryConnection === 'local' ? '本机 MCP 读取于 ' + new Date(library.fetchedAt).toLocaleString('zh-CN') : '问题库快照 ' + new Date(library.fetchedAt).toLocaleDateString('zh-CN')}`);
   switchView('history');
   report = `# 历史反馈风险提示\n\n来源：${SOURCE}\n问题库读取时间：${library.fetchedAt}\n匹配范围：${$('mode').selectedOptions[0].text}\n历史记录需结合本次需求确认。\n\n## 本次解析内容\n` + documents.map(d => `### ${d.name}\n${d.text}`).join('\n\n') + '\n\n' + (results.length ? results.map(r => `## 已经出现过的问题\n${r.record.issue}\n\n重点关注依据（反馈表原备注）：\n${r.record.notes || '原表未填写备注'}\n\n来源：${r.record.sheet}，第 ${r.record.row} 行（${r.record.issueRef || 'B' + r.record.row} / ${r.record.notesRef || 'I' + r.record.row}）\n匹配依据：${evidence(r)}\n`).join('\n') : '汇总表中未检索到相关记录，不代表不存在风险。');
   $('export').disabled = false;
@@ -190,3 +219,5 @@ $('export').onclick = () => {
   const url = URL.createObjectURL(new Blob([report], {type: 'text/markdown;charset=utf-8'}));
   const link = el('a'); link.href = url; link.download = '历史反馈风险提示.md'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
+
+connectLocal(false, true);

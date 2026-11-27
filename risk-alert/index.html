@@ -1,17 +1,18 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>历史反馈风险提示 · Tools</title><link rel="stylesheet" href="style.css?v=2"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>历史反馈风险提示 · Tools</title><link rel="stylesheet" href="style.css?v=3"></head>
 <body>
-<header class="site-header"><div class="header-inner"><a class="brand" href="../">Tools <span>/ 历史反馈风险提示</span></a><button id="settings-toggle" class="text-button" aria-expanded="false" aria-controls="settings">问题库设置</button></div></header>
+<header class="site-header"><div class="header-inner"><a class="brand" href="https://bole-sunyi.github.io/tools/">Tools <span>/ 历史反馈风险提示</span></a><button id="settings-toggle" class="text-button" aria-expanded="false" aria-controls="settings">问题库设置</button></div></header>
 <main>
 <div class="intro"><p class="eyebrow">历史反馈 · 功能回归</p><h1>从本次需求，找到历史问题</h1><p>上传活动文件或截图，解析内容后与「测试BUG记录」模糊匹配。</p></div>
-<div class="library-bar"><span id="library-dot" class="dot"></span><span id="library-status" role="status">问题库待加载 · 可以先上传需求文件</span><button id="library-open" class="text-button">加载问题库</button></div>
+<div class="library-bar"><span id="library-dot" class="dot"></span><span id="library-status" role="status">正在连接本机钉钉读取服务…</span><button id="refresh-library" class="text-button" hidden>刷新问题库</button><button id="library-open" class="text-button">连接本机</button></div>
+<p id="local-fallback" class="local-fallback" hidden>本机服务已启动但网页无法连接？<a href="http://127.0.0.1:18787/app/" target="_blank" rel="noopener">打开本机入口 ↗</a>。首次使用请双击本机的「启动风险提示工具.command」。</p>
 <section id="settings" class="settings" hidden aria-label="问题库设置">
 <div class="section-heading"><h2>问题库设置</h2><button id="settings-close" class="text-button">收起</button></div>
-<p class="muted">来源：<a href="https://alidocs.dingtalk.com/i/nodes/ZgpG2NdyVXrb196dfR2GBvBr8MwvDqPk" target="_blank" rel="noopener">测试BUG记录 ↗</a>。导入一次后，本页的需求都使用这份问题库匹配。</p>
-<label>导入问题库 JSON<input id="library" type="file" accept=".json"></label>
+<p class="muted">来源：<a href="https://alidocs.dingtalk.com/i/nodes/ZgpG2NdyVXrb196dfR2GBvBr8MwvDqPk" target="_blank" rel="noopener">测试BUG记录 ↗</a>。启动本机服务后，网页通过现有钉钉 MCP 自动读取，无需上传问题库。</p>
+<details><summary>备用：导入问题库快照</summary><label>导入问题库 JSON<input id="library" type="file" accept=".json"></label></details>
 <details><summary>连接已配置的只读服务</summary><div class="connection"><label>服务地址<input id="endpoint" type="url" placeholder="https://你的服务域名"></label><label>访问口令<input id="token" type="password" autocomplete="off"></label><button id="connect" class="secondary">读取问题库</button></div></details>
-<p id="coverage" class="muted">当前网站使用问题库快照，尚未配置钉钉自动同步。</p><button id="clear-library" class="text-button">清除问题库</button>
+<p id="coverage" class="muted">启动本机服务后，会自动通过现有钉钉 MCP 读取汇总表。</p><button id="clear-library" class="text-button">清除问题库</button>
 </section>
 <ol class="steps" aria-label="处理流程"><li id="step-upload" class="active"><span>1</span>上传文件</li><li id="step-review"><span>2</span>解析内容</li><li id="step-results"><span>3</span>查看匹配结果</li></ol>
 <section class="panel" id="upload-panel">
@@ -31,5 +32,5 @@
 <p id="view-description" class="view-description">以下为反馈表中的历史问题，按与本次内容的相关程度排序。</p>
 <div id="results" role="tabpanel" aria-labelledby="tab-history"></div><button id="more" class="secondary more" hidden>查看更多</button>
 </section>
-<footer>文件在当前浏览器解析。历史问题与关注依据均引用反馈表原文；相似记录需结合本次需求确认。<details><summary>解析与数据范围</summary><p>问题库使用只读快照，不含原表图片和附件。截图采用本机 OCR，纯图形机制可在解析内容中补充；扫描 PDF 请转成截图。OCR / PDF / Word 组件和 OCR 字库按需从 CDN 下载，文件内容不上传到 CDN 或模型。Excel 组件随页面提供。</p></details></footer>
-</main><script type="module" src="app.mjs?v=2"></script></body></html>
+<footer>文件在当前浏览器解析。历史问题与关注依据均引用反馈表原文；相似记录需结合本次需求确认。<details><summary>解析与数据范围</summary><p>问题库可通过本机 MCP 只读获取，最多缓存 1 分钟，也可手动导入快照；不含原表图片和附件。截图采用本机 OCR，纯图形机制可在解析内容中补充；扫描 PDF 请转成截图。OCR / PDF / Word 组件和 OCR 字库按需从 CDN 下载，文件内容不上传到 CDN 或模型。Excel 组件随页面提供。</p></details></footer>
+</main><script type="module" src="app.mjs?v=3"></script></body></html>
